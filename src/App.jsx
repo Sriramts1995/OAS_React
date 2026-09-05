@@ -1,8 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login/Login";
 import Dashboard from "./pages/Dashboard/Dashboard";
-import NFCreate from "./pages/request/createrequest/NfCreate";
-import NFView from "./pages/request/viewrequest/NFView";
+import NFCreate from "./pages/Memotypes/NFCreateRequest/NFCreate";
+import NFWorkflow from "./pages/Memotypes/NFWorkflowRequest/NFWorkflow";
 
 function App() {
   return (
@@ -11,7 +11,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/create" element={<NFCreate />} />
-        <Route path="/view" element={<NFView />} />
+        <Route path="/view" element={<NFWorkflow />} />
       </Routes>
     </BrowserRouter>
   );

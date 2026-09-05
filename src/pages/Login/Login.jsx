@@ -1,7 +1,7 @@
 import "./Login.css";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { login } from "../../services/authService";
+import { login } from "../../services/authservice";
 import { getDetailsByEmpNumber } from "../../services/userservice";
 
 export default function Login() {

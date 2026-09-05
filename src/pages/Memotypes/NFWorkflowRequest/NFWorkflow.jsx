@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { approveorrejectRequest } from "../../../services/requestservice";
-import "../CreateRequest/NFCreate.css";
+import "./NFWorkflow.css";
 
-export default function NFView() {
+export default function NFWorkflow() {
   const navigate = useNavigate();
   const location = useLocation();
 

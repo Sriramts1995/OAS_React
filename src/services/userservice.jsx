@@ -1,7 +1,7 @@
 import axios from "axios";
-import { COMMON_HEADERS } from "../common/constants";
+import { COMMON_HEADERS, VOLTMX_CONFIG } from "../config/voltmxConfig";
 
-const SERVICES_URL = "http://lp3-ap-52176291:8080/services";
+const SERVICES_URL = VOLTMX_CONFIG.BASE_URL;
 
 export const getDetailsByEmpNumber = async () => {
   // Grab the dynamic token saved during login
