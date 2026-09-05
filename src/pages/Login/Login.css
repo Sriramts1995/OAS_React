@@ -1,0 +1,126 @@
+:root {
+  --primary-burgundy: #861f41;
+  --primary-hover: #6e1734;
+  --bg-gradient-start: #2a081a;
+  --bg-gradient-end: #12030b;
+  --text-dark: #2d3748;
+  --text-muted: #718096;
+}
+
+.login-wrapper {
+  height: 100vh;
+  width: 100vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: linear-gradient(135deg, var(--bg-gradient-start), var(--bg-gradient-end));
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  position: relative;
+}
+
+.brand-header {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  padding: 0 40px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 1px;
+}
+
+.logo-symbol {
+  color: #ff3366;
+  font-size: 1.4rem;
+}
+
+.login-card {
+  width: 380px;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 36px 32px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.card-header h2 {
+  margin: 0;
+  color: var(--primary-burgundy);
+  font-size: 1.6rem;
+  font-weight: 700;
+}
+
+.card-header p {
+  margin: 4px 0 0 0;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-group input {
+  padding: 12px 14px;
+  font-size: 0.95rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.form-group input:focus {
+  border-color: var(--primary-burgundy);
+  box-shadow: 0 0 0 3px rgba(134, 31, 65, 0.12);
+}
+
+.btn-login {
+  padding: 12px;
+  background: var(--primary-burgundy);
+  color: #ffffff;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-login:hover {
+  background: var(--primary-hover);
+}
+
+.card-footer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  border-top: 1px solid #edf2f7;
+  padding-top: 16px;
+  margin-top: 8px;
+}
