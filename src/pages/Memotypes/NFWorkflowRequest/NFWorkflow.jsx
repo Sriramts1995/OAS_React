@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { approveorrejectRequest } from "../../../services/requestservice";
+import InputField from "../../../components/InputField";
+import TextAreaField from "../../../components/TextAreaField";
 import "./NFWorkflow.css";
 
 export default function NFWorkflow() {
@@ -127,7 +129,7 @@ export default function NFWorkflow() {
     }
   };
 
-  
+
   // Handle Reject Action
   const handleReject = async () => {
     if (!record) return;
@@ -311,11 +313,11 @@ export default function NFWorkflow() {
               <div className="initiator-avatar">
                 {record.initiatorname
                   ? record.initiatorname
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .substring(0, 2)
-                      .toUpperCase()
+                    .split(" ")
+                    .map((n) => n[0])
+                    .join("")
+                    .substring(0, 2)
+                    .toUpperCase()
                   : "IN"}
               </div>
               <div className="initiator-info">
@@ -339,35 +341,29 @@ export default function NFWorkflow() {
             <div className="approver-row">
               <div className="row-number">1</div>
 
-              <div className="form-group flex-1">
-                <label>Emp ID</label>
-                <input
-                  type="text"
-                  value={approverRecord.approvarid || ""}
-                  readOnly
-                  disabled
-                />
-              </div>
+              <InputField
+                label="Emp ID"
+                className="flex-1"
+                value={approverRecord.approvarid || ""}
+                readOnly
+                disabled
+              />
 
-              <div className="form-group flex-2">
-                <label>Emp Name</label>
-                <input
-                  type="text"
-                  value={approverRecord.approvarname || ""}
-                  readOnly
-                  disabled
-                />
-              </div>
+              <InputField
+                label="Emp Name"
+                className="flex-2"
+                value={approverRecord.approvarname || ""}
+                readOnly
+                disabled
+              />
 
-              <div className="form-group flex-2">
-                <label>Department</label>
-                <input
-                  type="text"
-                  value={approverRecord.approvardeptname || ""}
-                  readOnly
-                  disabled
-                />
-              </div>
+              <InputField
+                label="Department"
+                className="flex-2"
+                value={approverRecord.approvardeptname || ""}
+                readOnly
+                disabled
+              />
             </div>
           </div>
 
@@ -375,53 +371,47 @@ export default function NFWorkflow() {
 
           {/* Section 2: Subject Line */}
           <div className="form-section">
-            <div className="form-group">
-              <label>Subject Line</label>
-              <input
-                type="text"
-                value={record.subject || ""}
-                readOnly
-                disabled
-              />
-            </div>
+            <InputField
+              label="Subject Line"
+              value={record.subject || ""}
+              readOnly
+              disabled
+            />
           </div>
 
           {/* Section 3: Details */}
           <div className="form-section">
-            <div className="form-group">
-              <label>Details</label>
-              <textarea rows={6} value={decodedDetails} readOnly disabled />
-            </div>
+            <TextAreaField
+              label="Details"
+              rows={6}
+              value={decodedDetails}
+              readOnly
+              disabled
+            />
           </div>
 
           {/* Section 4: Initiator Remarks */}
           <div className="form-section">
-            <div className="form-group">
-              <label>Initiator Remarks / Recommendations</label>
-              <textarea
-                rows={3}
-                value={record.initiatorremarks || ""}
-                readOnly
-                disabled
-              />
-            </div>
+            <TextAreaField
+              label="Initiator Remarks / Recommendations"
+              rows={3}
+              value={record.initiatorremarks || ""}
+              readOnly
+              disabled
+            />
           </div>
 
           <hr className="section-divider" />
 
           {/* Section 5: Approver Action Remarks */}
-          {activeTab === "pending"&& (
-            <div className="form-section">
-              <div className="form-group">
-                <label>Approver Remarks / Action Comments</label>
-                <textarea
-                  rows={3}
-                  placeholder="Enter remarks for approval..."
-                  value={approverRemarks}
-                  onChange={(e) => setApproverRemarks(e.target.value)}
-                />
-              </div>
-            </div>
+          {activeTab === "pending" && (
+            <TextAreaField
+              label="Approver Remarks / Action Comments"
+              rows={3}
+              placeholder="Enter remarks for approval..."
+              value={approverRemarks}
+              onChange={(e) => setApproverRemarks(e.target.value)}
+            />
           )}
         </div>
       </div>

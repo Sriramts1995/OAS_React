@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getApprovarDetailsById } from "../../../services/userservice";
 import { submitrequest } from "../../../services/requestservice";
+import InputField from "../../../components/InputField";
+import TextAreaField from "../../../components/TextAreaField";
 import "./NFCreate.css";
 
 export default function NFCreate() {
@@ -101,10 +103,12 @@ export default function NFCreate() {
 
     // Validate that all approver fields are filled out
     const invalidApprover = approvers.find(
-      (app) => !app.empId.trim() || !app.empName.trim()
+      (app) => !app.empId.trim() || !app.empName.trim(),
     );
     if (invalidApprover) {
-      alert("Please select valid approvers for all added rows before submitting.");
+      alert(
+        "Please select valid approvers for all added rows before submitting.",
+      );
       return;
     }
 
@@ -283,39 +287,33 @@ export default function NFCreate() {
               <div className="approver-row" key={index}>
                 <div className="row-number">{index + 1}</div>
 
-                <div className="form-group flex-1">
-                  <label>Search by Emp ID</label>
-                  <input
-                    type="text"
-                    placeholder="Enter Emp ID & Press Enter"
-                    value={app.empId}
-                    onChange={(e) =>
-                      handleApproverChange(index, "empId", e.target.value)
-                    }
-                    onKeyDown={(e) => handleEmpIdKeyDown(e, index)}
-                    onBlur={() => fetchApproverDetails(index)}
-                  />
-                </div>
+                <InputField
+                  label="Search by Emp ID"
+                  className="flex-1"
+                  placeholder="Enter Emp ID & Press Enter"
+                  value={app.empId}
+                  onChange={(e) =>
+                    handleApproverChange(index, "empId", e.target.value)
+                  }
+                  onKeyDown={(e) => handleEmpIdKeyDown(e, index)}
+                  onBlur={() => fetchApproverDetails(index)}
+                />
 
-                <div className="form-group flex-2">
-                  <label>Emp Name</label>
-                  <input
-                    type="text"
-                    placeholder="Search by Employee Name"
-                    value={app.empName}
-                    readOnly
-                  />
-                </div>
+                <InputField
+                  label="Emp Name"
+                  className="flex-2"
+                  placeholder="Employee Name"
+                  value={app.empName}
+                  readOnly
+                />
 
-                <div className="form-group flex-2">
-                  <label>Department</label>
-                  <input
-                    type="text"
-                    placeholder="Department Name"
-                    value={app.department}
-                    readOnly
-                  />
-                </div>
+                <InputField
+                  label="Department"
+                  className="flex-2"
+                  placeholder="Department Name"
+                  value={app.department}
+                  readOnly
+                />
 
                 {approvers.length > 1 && (
                   <button
@@ -335,49 +333,38 @@ export default function NFCreate() {
 
           {/* Section 2: Subject Line */}
           <div className="form-section">
-            <div className="form-group">
-              <label>
-                Subject Line <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                placeholder="Type your request subject line here..."
-                value={subject}
-                onChange={(e) => setSubject(e.target.value)}
-                maxLength={255}
-                required
-              />
-              <span className="input-hint">Max 255 characters.</span>
-            </div>
+            <InputField
+              label="Subject Line"
+              required
+              placeholder="Type your request subject line here..."
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              maxLength={255}
+              hint="Max 255 characters."
+            />
           </div>
 
           {/* Section 3: Details */}
           <div className="form-section">
-            <div className="form-group">
-              <label>
-                Details <span className="required">*</span>
-              </label>
-              <textarea
-                rows={6}
-                placeholder="Type detailed description here..."
-                value={details}
-                onChange={(e) => setDetails(e.target.value)}
-                required
-              />
-            </div>
+            <TextAreaField
+              label="Details"
+              required
+              rows={6}
+              placeholder="Type detailed description here..."
+              value={details}
+              onChange={(e) => setDetails(e.target.value)}
+            />
           </div>
 
           {/* Section 4: Initiator Remarks */}
           <div className="form-section">
-            <div className="form-group">
-              <label>Initiator Remarks / Recommendations</label>
-              <textarea
-                rows={3}
-                placeholder="Type initiator remarks or recommendations..."
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-              />
-            </div>
+            <TextAreaField
+              label="Initiator Remarks / Recommendations"
+              rows={3}
+              placeholder="Type initiator remarks or recommendations..."
+              value={remarks}
+              onChange={(e) => setRemarks(e.target.value)}
+            />
           </div>
         </form>
       </div>
