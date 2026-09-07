@@ -1,6 +1,13 @@
 import "./Dashboard.css";
 import { useEffect, useState } from "react";
-import { getPendingListByEmpId, getrequestsdetailsById, getInitiatedListByEmpId, getApprovedListByEmpId, getRejectedListByEmpId } from "../../services/requestservice";
+import {
+  getPendingListByEmpId,
+  getrequestsdetailsById,
+  getInitiatedListByEmpId,
+  getApprovedListByEmpId,
+  getRejectedListByEmpId,
+  advancedSearch
+} from "../../services/requestservice";
 import { useNavigate } from "react-router-dom";
 
 export default function Dashboard() {
@@ -9,39 +16,47 @@ export default function Dashboard() {
   const [initiatedRequests, setInitiatedRequests] = useState([]);
   const [approvedRequests, setApprovedRequests] = useState([]);
   const [rejectedRequests, setRejectedRequests] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
-//getApprovedListByEmpId, getRejectedListByEmpId
+
+  // Advance Search Form State
+  const [searchFilter, setSearchFilter] = useState("oasnumber"); // 'oasnumber' or 'subject'
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+
+  //getApprovedListByEmpId, getRejectedListByEmpId
   useEffect(() => {
     fetchPendingRequests();
   }, []);
 
-//   useEffect(() => {
-//   const fetchAllData = async () => {
-//     setLoading(true);
-//     try {
-//       const empNumber = localStorage.getItem("empNumber");
-      
-//       const [pendingRes, initiatedRes] = await Promise.all([
-//         getPendingListByEmpId(empNumber),
-//         getInitiatedListByEmpId(empNumber)
-//       ]);
+  //   useEffect(() => {
+  //   const fetchAllData = async () => {
+  //     setLoading(true);
+  //     try {
+  //       const empNumber = localStorage.getItem("empNumber");
 
-//       if (pendingRes.data?.records) {
-//         setPendingRequests(pendingRes.data.records);
-//       }
-//       if (initiatedRes.data?.records) {
-//         setInitiatedRequests(initiatedRes.data.records);
-//       }
-//     } catch (error) {
-//       console.error("Error fetching dashboard data:", error);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
+  //       const [pendingRes, initiatedRes] = await Promise.all([
+  //         getPendingListByEmpId(empNumber),
+  //         getInitiatedListByEmpId(empNumber)
+  //       ]);
 
-//   fetchAllData();
-// }, []);
+  //       if (pendingRes.data?.records) {
+  //         setPendingRequests(pendingRes.data.records);
+  //       }
+  //       if (initiatedRes.data?.records) {
+  //         setInitiatedRequests(initiatedRes.data.records);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching dashboard data:", error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchAllData();
+  // }, []);
 
   const fetchPendingRequests = async () => {
     setLoading(true);
@@ -108,6 +123,39 @@ export default function Dashboard() {
     }
   };
 
+  // Handle Advance Search API Submit
+  const handleAdvanceSearch = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setActiveTab("search");
+
+    try {
+      const empNumber = localStorage.getItem("empNumber") || "100203";
+      const response = await advancedSearch({
+        filterp: searchFilter,
+        filterconditionp: searchKeyword,
+        fromdate: fromDate,
+        todate: toDate,
+        loginuser: empNumber,
+      });
+
+      console.log("Advance Search Response:", response.data);
+
+      const records =
+        response.data?.records ||
+        response.data?.recordsList ||
+        response.data?.searchrecords ||
+        [];
+
+      setSearchResults(records);
+    } catch (error) {
+      console.error("Error running advance search:", error);
+      setSearchResults([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
 
   // Tab Switch Handler
   const handleTabChange = (tabName) => {
@@ -155,7 +203,7 @@ export default function Dashboard() {
     navigate("/");
   };
 
-// Dynamic UI Labels & Data Mapping for Right Panel
+  // Dynamic UI Labels & Data Mapping for Right Panel
   const tabConfig = {
     pending: {
       title: "Pending Requests",
@@ -176,6 +224,11 @@ export default function Dashboard() {
       title: "Rejected Requests",
       subtitle: "Here is an overview of requests that were rejected.",
       data: rejectedRequests,
+    },
+    search: {
+      title: "Search Results",
+      subtitle: "Here are the records matching your advance search criteria.",
+      data: searchResults,
     },
   };
 
@@ -201,9 +254,9 @@ export default function Dashboard() {
             </div>
           </div>
 
-          <button 
-            type="button" 
-            className="btn-logout" 
+          <button
+            type="button"
+            className="btn-logout"
             onClick={handleLogout}
           >
             Logout
@@ -248,6 +301,60 @@ export default function Dashboard() {
               {/*<span className="menu-badge">{rejectedRequests.length}</span>*/}
             </a>
           </nav>
+
+          {/* Advance Search Panel */}
+          <div className="sidebar-search-card">
+            <h4 className="search-panel-title">Advance Search</h4>
+            <form onSubmit={handleAdvanceSearch} className="search-form">
+              <div className="search-field">
+                <label>Memo Type</label>
+                <input type="text" value="Non-Financial" disabled readOnly />
+              </div>
+
+              <div className="search-field">
+                <label>Search By</label>
+                <select
+                  value={searchFilter}
+                  onChange={(e) => setSearchFilter(e.target.value)}
+                >
+                  <option value="oasnumber">OAS Number</option>
+                  <option value="subject">Subject</option>
+                </select>
+              </div>
+
+              <div className="search-field">
+                <label>Keyword</label>
+                <input
+                  type="text"
+                  placeholder="Enter search value..."
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                />
+              </div>
+
+              <div className="search-field">
+                <label>From Date</label>
+                <input
+                  type="date"
+                  value={fromDate}
+                  onChange={(e) => setFromDate(e.target.value)}
+                />
+              </div>
+
+              <div className="search-field">
+                <label>To Date</label>
+                <input
+                  type="date"
+                  value={toDate}
+                  onChange={(e) => setToDate(e.target.value)}
+                />
+              </div>
+
+              <button type="submit" className="btn-advance-search">
+                Search
+              </button>
+            </form>
+          </div>
         </aside>
 
         {/* Right Content View */}

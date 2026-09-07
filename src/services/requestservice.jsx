@@ -103,6 +103,38 @@ export const getRejectedListByEmpId = async (
   );
 };
 
+// ADVANCE SEARCH (Reports and Search Service)
+export const advancedSearch = async ({
+  filterp = "oasnumber",
+  filterconditionp = "",
+  fromdate = "",
+  todate = "",
+  loginuser = "100203",
+}) => {
+  const token = localStorage.getItem("claims_token");
+
+  const formData = new URLSearchParams();
+  formData.append("memotype", "1"); // Hardcoded to Non-Financial memo
+  formData.append("filterp", filterp);
+  formData.append("filterconditionp", filterconditionp);
+  formData.append("fromdate", (fromdate || "").replaceAll("-", "/")); // Formats YYYY/MM/DD
+  formData.append("todate", (todate || "").replaceAll("-", "/"));
+  formData.append("loginuser", loginuser);
+  formData.append("rolep", "admin");
+
+  return axios.post(
+    `${SERVICES_URL}/reportsandsearch/advancedSearch`,
+    formData,
+    {
+      headers: {
+        ...COMMON_HEADERS,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Voltmx-Authorization": token,
+      },
+    }
+  );
+};
+
 // SUBMIT REQUEST (Volt MX Object Service)
 export const submitrequest = async (payload) => {
   const token = localStorage.getItem("claims_token");
