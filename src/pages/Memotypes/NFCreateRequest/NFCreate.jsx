@@ -4,11 +4,14 @@ import { getApprovarDetailsById } from "../../../services/userservice";
 import { submitrequest } from "../../../services/requestservice";
 import InputField from "../../../components/InputField";
 import TextAreaField from "../../../components/TextAreaField";
+import { validateCreateForm } from "../../../utils/validation";
+import { buildSubmitPayload } from "../../../utils/payloadBuilder";
+import { MEMO_TYPES, UI_LIMITS } from "../../../utils/constants";
 import "./NFCreate.css";
 
 export default function NFCreate() {
   const navigate = useNavigate();
-  const memoType = "Non - Financial";
+  const memoType = MEMO_TYPES.NON_FINANCIAL;
 
   // Dynamic Approvers Array State (Max 3)
   const [approvers, setApprovers] = useState([
@@ -22,7 +25,7 @@ export default function NFCreate() {
 
   // Add new approver row (up to max 3)
   const addApproverRow = () => {
-    if (approvers.length < 3) {
+    if (approvers.length < UI_LIMITS.MAX_APPROVER_ROWS) {
       setApprovers((prev) => [
         ...prev,
         { empId: "", empName: "", department: "", email: "", gradeCode: "" },
@@ -101,107 +104,27 @@ export default function NFCreate() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate that all approver fields are filled out
-    const invalidApprover = approvers.find(
-      (app) => !app.empId.trim() || !app.empName.trim(),
-    );
-    if (invalidApprover) {
-      alert(
-        "Please select valid approvers for all added rows before submitting.",
-      );
+    // Validate form input using common validation utility
+    const validation = validateCreateForm({ subject, details, approvers });
+    if (!validation.isValid) {
+      alert(validation.message);
       return;
     }
 
     try {
       setIsSubmitting(true);
-      const currentDate = new Date().toISOString().replace("Z", "");
+      const storedUserInfo = JSON.parse(
+        localStorage.getItem("userInfo") || "{}"
+      );
 
-      // Map dynamic approver array into backend schema
-      const dynamicApproversPayload = approvers.map((app, idx) => ({
-        approvarid: app.empId,
-        approvarname: app.empName,
-        approvardeptid: null,
-        approvardeptname: app.department,
-        status: 1,
-        sequence: idx + 1, // Sequence 1, 2, 3
-        isskipped: 0,
-        assigneddate: null,
-        completiondate: null,
-        requestid: null,
-        Grade_Code: app.gradeCode || "AM",
-        email: app.email || "",
-        updatedat: null,
-        createdat: currentDate,
-      }));
-
-      // Initiator sequence 0 + dynamic approver sequence
-      const fullApproverList = [
-        {
-          approvarid: "100203",
-          approvarname: "Sriram There",
-          approvardeptid: null,
-          approvardeptname: "C002:Information Technology - Infrastructure",
-          status: 20,
-          sequence: 0,
-          isskipped: 0,
-          assigneddate: null,
-          completiondate: null,
-          requestid: null,
-          createdat: currentDate,
-          updatedat: null,
-          email: "sriram.there@hcl-software.com",
-        },
-        ...dynamicApproversPayload,
-      ];
-
-      const payload = {
-        initiatorid: "100203",
-        initiatorname: "Sriram There",
-        initiatordept: "C002:Information Technology - Infrastructure",
-        ip: "192.168.0.107",
-        history: [
-          {
-            fromid: "100203",
-            fromname: "Sriram There",
-            toid: null,
-            toname: null,
-            fromstatus: 0,
-            tostatus: null,
-            requestid: null,
-            remarks: remarks || "test from react",
-            ip: "192.168.0.107",
-            createdat: currentDate,
-            updatedat: currentDate,
-          },
-        ],
-        memotypeid: 1,
-        submemotypeid: 1,
-        memoname: memoType,
-        submemoname: "Generic",
-        requestdetails: [
-          {
-            description: btoa(unescape(encodeURIComponent(details))),
-            requestid: null,
-            createdat: currentDate,
-            updatedat: currentDate,
-          },
-        ],
-        subject: subject,
-        initiatorremarks: remarks,
-        requesttype: "request",
-        currentuserstatus: 1,
-        status: 1,
-        createdat: currentDate,
-        updatedat: currentDate,
-        assigneddate: currentDate,
-        overallcompletiondate: null,
-        approvar: fullApproverList,
-        attachment: [],
-        currentuser: approvers[0].empId, // Assigned to 1st approver
-        currentusername: approvers[0].empName,
-        fyi: [],
-        email: {},
-      };
+      // Build dynamic Volt MX request payload via builder utility
+      const payload = buildSubmitPayload({
+        subject,
+        details,
+        remarks,
+        approvers,
+        userInfo: storedUserInfo,
+      });
 
       console.log("Sending Payload:", payload);
       const response = await submitrequest(payload);
@@ -272,7 +195,7 @@ export default function NFCreate() {
               <h4 className="section-title">
                 Approver Line-Up <span className="title-sub">(Max 3)</span>
               </h4>
-              {approvers.length < 3 && (
+              {approvers.length < UI_LIMITS.MAX_APPROVER_ROWS && (
                 <button
                   type="button"
                   className="btn-add-approver"
@@ -339,8 +262,8 @@ export default function NFCreate() {
               placeholder="Type your request subject line here..."
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              maxLength={255}
-              hint="Max 255 characters."
+              maxLength={UI_LIMITS.SUBJECT_MAX_LENGTH}
+              hint={`Max ${UI_LIMITS.SUBJECT_MAX_LENGTH} characters.`}
             />
           </div>
 

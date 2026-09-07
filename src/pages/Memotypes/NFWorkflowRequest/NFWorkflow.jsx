@@ -3,6 +3,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { approveorrejectRequest } from "../../../services/requestservice";
 import InputField from "../../../components/InputField";
 import TextAreaField from "../../../components/TextAreaField";
+import { buildWorkflowPayload } from "../../../utils/payloadBuilder";
+import { REQUEST_STATUS } from "../../../utils/constants";
 import "./NFWorkflow.css";
 
 export default function NFWorkflow() {
@@ -51,9 +53,6 @@ export default function NFWorkflow() {
     try {
       setIsApproving(true);
 
-      // Generate SQL/Java compatible timestamp (Without trailing 'Z')
-      const now = new Date().toISOString().replace("Z", "");
-
       // Retrieve logged-in user info from localStorage or fallback
       const empNumber = localStorage.getItem("empNumber") || "100205";
       const storedUserInfo = JSON.parse(
@@ -61,59 +60,14 @@ export default function NFWorkflow() {
       );
       const currentUserName = storedUserInfo.Display_Name || "Suresh Injeti";
 
-      // 1. Update second approver's status to 4
-      const updatedApprovar = (record.approvar || []).map((app, index) => {
-        if (index === 1 || app.approvarid === empNumber) {
-          return {
-            ...app,
-            status: 4, // Approved Status
-            updatedat: now,
-          };
-        }
-        return app;
+      // Construct full approval payload via builder utility
+      const payload = buildWorkflowPayload({
+        record,
+        statusCode: REQUEST_STATUS.APPROVED,
+        approverRemarks,
+        empNumber,
+        currentUserName,
       });
-
-      // 2. Construct new history entry
-      const newHistoryEntry = {
-        fromid: empNumber,
-        fromname: currentUserName,
-        fromstatus: 4,
-        toid: null,
-        toname: null,
-        tostatus: null,
-        remarks: approverRemarks || "Approved",
-        ip: "192.168.0.107",
-        createdat: now,
-        updatedat: now,
-        requestid: record.Id,
-      };
-
-      const updatedHistory = [...(record.history || []), newHistoryEntry];
-
-      // 3. Construct full approval payload
-      const payload = {
-        ...record,
-        status: 4, // Approved/Closed
-        currentuserstatus: 4,
-        updatedat: now,
-        assigneddate: now,
-        currentuser: empNumber,
-        currentusername: currentUserName,
-        approvar: updatedApprovar,
-        history: updatedHistory,
-        attachment: [],
-        fyi: [],
-        email: {},
-        // email: {
-        //   to: record.approvar?.[0]?.email || "sriram.there@hcl-software.com",
-        //   cc: updatedApprovar?.[1]?.email || "sureshkumar.injeti@hcl-software.com",
-        //   subject: `OAS Approved: ${record.subject || ""}`,
-        //   memotype: record.memoname || "Non - Financial",
-        //   status: 4,
-        //   contexttext: `Reference No ${record.axisrequestid || ""} is approved and closed.`,
-        //   flowtype: "",
-        // },
-      };
 
       console.log("Sending Formatted Payload:", payload);
       const response = await approveorrejectRequest(payload);
@@ -129,16 +83,12 @@ export default function NFWorkflow() {
     }
   };
 
-
   // Handle Reject Action
   const handleReject = async () => {
     if (!record) return;
 
     try {
       setIsRejecting(true);
-
-      // Generate SQL/Java compatible timestamp (Without trailing 'Z')
-      const now = new Date().toISOString().replace("Z", "");
 
       // Retrieve logged-in user info from localStorage or fallback
       const empNumber = localStorage.getItem("empNumber") || "100205";
@@ -147,59 +97,14 @@ export default function NFWorkflow() {
       );
       const currentUserName = storedUserInfo.Display_Name || "Suresh Injeti";
 
-      // 1. Update second approver's status to 5
-      const updatedApprovar = (record.approvar || []).map((app, index) => {
-        if (index === 1 || app.approvarid === empNumber) {
-          return {
-            ...app,
-            status: 5, // Rejected Status
-            updatedat: now,
-          };
-        }
-        return app;
+      // Construct full rejection payload via builder utility
+      const payload = buildWorkflowPayload({
+        record,
+        statusCode: REQUEST_STATUS.REJECTED,
+        approverRemarks,
+        empNumber,
+        currentUserName,
       });
-
-      // 2. Construct new history entry
-      const newHistoryEntry = {
-        fromid: empNumber,
-        fromname: currentUserName,
-        fromstatus: 5,
-        toid: null,
-        toname: null,
-        tostatus: null,
-        remarks: approverRemarks || "Rejected",
-        ip: "192.168.0.107",
-        createdat: now,
-        updatedat: now,
-        requestid: record.Id,
-      };
-
-      const updatedHistory = [...(record.history || []), newHistoryEntry];
-
-      // 3. Construct full approval payload
-      const payload = {
-        ...record,
-        status: 5, // Rejected
-        currentuserstatus: 5,
-        updatedat: now,
-        assigneddate: now,
-        currentuser: empNumber,
-        currentusername: currentUserName,
-        approvar: updatedApprovar,
-        history: updatedHistory,
-        attachment: [],
-        fyi: [],
-        email: {},
-        // email: {
-        //   to: record.approvar?.[0]?.email || "sriram.there@hcl-software.com",
-        //   cc: updatedApprovar?.[1]?.email || "sureshkumar.injeti@hcl-software.com",
-        //   subject: `OAS Approved: ${record.subject || ""}`,
-        //   memotype: record.memoname || "Non - Financial",
-        //   status: 4,
-        //   contexttext: `Reference No ${record.axisrequestid || ""} is approved and closed.`,
-        //   flowtype: "",
-        // },
-      };
 
       console.log("Sending Formatted Payload:", payload);
       const response = await approveorrejectRequest(payload);
