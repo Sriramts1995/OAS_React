@@ -21,8 +21,15 @@ export default function NFWorkflow() {
   const record = requestData?.records?.[0];
   const activeTab = location.state?.activeTab;
 
-  // Extract second approver (Sequence 1)
-  const approverRecord = record?.approvar?.[1] || record?.approvar?.[0] || {};
+  // Extract all dynamic approvers (Sequence 1, 2, 3...)
+  const displayApprovers =
+    record?.approvar?.filter((app) => app.sequence > 0) || [];
+
+  // Format existing history comments into "From: "id", "name" and Comments: """
+  const existingApproverComments = (record?.history || [])
+    .filter((h) => h.fromstatus !== 0 && h.fromstatus !== 20 && h.remarks) // Exclude initial tracking entries
+    .map((h) => `From: "${h.fromid}", "${h.fromname}" and Comments: "${h.remarks}"`)
+    .join("\n");
 
   // Helper function to decode Base64 'description' field
   const decodeBase64 = (base64Str) => {
@@ -147,6 +154,10 @@ export default function NFWorkflow() {
     );
   }
 
+  // Condition to check if overall request status allows showing tickmarks (Status 1 or 4)
+  const isOverallStatusEligibleForTickmark =
+    record.status === 1 || record.status === 4 || record.status === REQUEST_STATUS.PENDING || record.status === REQUEST_STATUS.APPROVED;
+
   return (
     <div className="create-page-container">
       {/* Top Header */}
@@ -237,39 +248,71 @@ export default function NFWorkflow() {
 
           <hr className="section-divider" />
 
-          {/* Section 1: Approver Line-Up */}
+          {/* Section 1: Approver Line-Up (Renders all dynamic approvers) */}
           <div className="form-section">
             <h4 className="section-title">
-              Approver Line-Up <span className="title-sub">(Sequence 1)</span>
+              Approver Line-Up{" "}
+              <span className="title-sub">
+                ({displayApprovers.length} Approver{displayApprovers.length !== 1 ? "s" : ""})
+              </span>
             </h4>
 
-            <div className="approver-row">
-              <div className="row-number">1</div>
+            {displayApprovers.map((app, index) => {
+              // Show tickmark only if overall request status is 1 or 4 AND this individual approver's status is 4 (Approved)
+              const isApproverApproved = app.status === 4 || app.status === REQUEST_STATUS.APPROVED;
+              const showApprovedTickmark = isOverallStatusEligibleForTickmark && isApproverApproved;
 
-              <InputField
-                label="Emp ID"
-                className="flex-1"
-                value={approverRecord.approvarid || ""}
-                readOnly
-                disabled
-              />
+              return (
+                <div
+                  className="approver-row"
+                  key={app.Id || index}
+                  style={{ marginBottom: "12px", display: "flex", alignItems: "center" }}
+                >
+                  <div className="row-number">{index + 1}</div>
 
-              <InputField
-                label="Emp Name"
-                className="flex-2"
-                value={approverRecord.approvarname || ""}
-                readOnly
-                disabled
-              />
+                  <InputField
+                    label="Emp ID"
+                    className="flex-1"
+                    value={app.approvarid || ""}
+                    readOnly
+                    disabled
+                  />
 
-              <InputField
-                label="Department"
-                className="flex-2"
-                value={approverRecord.approvardeptname || ""}
-                readOnly
-                disabled
-              />
-            </div>
+                  <InputField
+                    label="Emp Name"
+                    className="flex-2"
+                    value={app.approvarname || ""}
+                    readOnly
+                    disabled
+                  />
+
+                  <InputField
+                    label="Department"
+                    className="flex-2"
+                    value={app.approvardeptname || ""}
+                    readOnly
+                    disabled
+                  />
+
+                  {/* Approved Red Tickmark */}
+                  {showApprovedTickmark && (
+                    <span
+                      style={{
+                        color: "#861f41",
+                        fontSize: "24px",
+                        fontWeight: "bold",
+                        marginLeft: "12px",
+                        lineHeight: "1",
+                        userSelect: "none",
+                      }}
+                      title="Approved"
+                    >
+                      ✓
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           <hr className="section-divider" />
@@ -308,16 +351,42 @@ export default function NFWorkflow() {
 
           <hr className="section-divider" />
 
-          {/* Section 5: Approver Action Remarks */}
-          {activeTab === "pending" && (
-            <TextAreaField
-              label="Approver Remarks / Action Comments"
-              rows={3}
-              placeholder="Enter remarks for approval..."
-              value={approverRemarks}
-              onChange={(e) => setApproverRemarks(e.target.value)}
-            />
-          )}
+          {/* Section 5: Approver Action Remarks (Always Visible) */}
+          <div className="form-section">
+            {/* Display formatted historical approver remarks if present */}
+            {existingApproverComments && (
+              <div style={{ marginBottom: "12px" }}>
+                <TextAreaField
+                  label="Previous Approver Remarks"
+                  rows={3}
+                  value={existingApproverComments}
+                  readOnly
+                  disabled
+                />
+              </div>
+            )}
+
+            {/* Editable field for acting approver in Pending view, or disabled view for others */}
+            {activeTab === "pending" ? (
+              <TextAreaField
+                label="Approver Remarks / Action Comments"
+                rows={3}
+                placeholder="Enter remarks for approval..."
+                value={approverRemarks}
+                onChange={(e) => setApproverRemarks(e.target.value)}
+              />
+            ) : (
+              !existingApproverComments && (
+                <TextAreaField
+                  label="Approver Remarks / Action Comments"
+                  rows={3}
+                  value="No approver remarks provided."
+                  readOnly
+                  disabled
+                />
+              )
+            )}
+          </div>
         </div>
       </div>
     </div>

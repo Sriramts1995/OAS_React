@@ -16,12 +16,13 @@ export const buildSubmitPayload = ({
   const initiatorName = userInfo.Display_Name;
   const initiatorDept = userInfo.Department;
 
+  // First approver (Sequence 1) gets status = 1 (Pending), subsequent approvers get status = 0
   const dynamicApproversPayload = approvers.map((app, idx) => ({
     approvarid: app.empId,
     approvarname: app.empName,
     approvardeptid: null,
     approvardeptname: app.department,
-    status: REQUEST_STATUS.PENDING,
+    status: idx === 0 ? REQUEST_STATUS.PENDING : 0, // Sequence 1: 1, Sequence 2+: 0
     sequence: idx + 1,
     isskipped: 0,
     assigneddate: null,
@@ -57,6 +58,7 @@ export const buildSubmitPayload = ({
     initiatorname: initiatorName,
     initiatordept: initiatorDept,
     ip: "1.1.1.1",
+    /*
     history: [
       {
         fromid: initiatorId,
@@ -72,6 +74,8 @@ export const buildSubmitPayload = ({
         updatedat: currentDate,
       },
     ],
+    */
+    history: [], // History kept empty on creation
     memotypeid: 1,
     submemotypeid: 1,
     memoname: MEMO_TYPES.NON_FINANCIAL,
@@ -113,9 +117,22 @@ export const buildWorkflowPayload = ({
   currentUserName,
 }) => {
   const now = new Date().toISOString().replace("Z", "");
+  const approverList = record.approvar || [];
 
-  const updatedApprovar = (record.approvar || []).map((app, index) => {
-    if (index === 1 || app.approvarid === empNumber) {
+  // Find index of the currently acting approver in the sequence
+  const currentApproverIndex = approverList.findIndex(
+    (app) => app.approvarid === empNumber && app.sequence > 0
+  );
+
+  const activeIndex = currentApproverIndex !== -1 ? currentApproverIndex : 1;
+
+  let nextCurrentUser = empNumber;
+  let nextCurrentUserName = currentUserName;
+  let nextCurrentUserStatus = statusCode;
+  let overallRequestStatus = statusCode;
+
+  const updatedApprovar = approverList.map((app, index) => {
+    if (index === activeIndex) {
       return {
         ...app,
         status: statusCode,
@@ -125,6 +142,29 @@ export const buildWorkflowPayload = ({
     return app;
   });
 
+  // Handle sequential approver progression upon approval
+  if (statusCode === REQUEST_STATUS.APPROVED) {
+    const nextApproverIndex = activeIndex + 1;
+    if (nextApproverIndex < approverList.length) {
+      // Transition next approver status from 0 to 1 (Pending)
+      const nextApprover = approverList[nextApproverIndex];
+      updatedApprovar[nextApproverIndex] = {
+        ...nextApprover,
+        status: REQUEST_STATUS.PENDING, // 1
+        updatedat: now,
+      };
+      nextCurrentUser = nextApprover.approvarid;
+      nextCurrentUserName = nextApprover.approvarname;
+      nextCurrentUserStatus = REQUEST_STATUS.PENDING; // 1
+      overallRequestStatus = REQUEST_STATUS.PENDING; // 1
+    } else {
+      // Final approver in line approved -> overall request closed & approved
+      overallRequestStatus = REQUEST_STATUS.APPROVED; // 4
+      nextCurrentUserStatus = REQUEST_STATUS.APPROVED; // 4
+    }
+  }
+
+  // Construct new history entry for approver action
   const newHistoryEntry = {
     fromid: empNumber,
     fromname: currentUserName,
@@ -141,14 +181,14 @@ export const buildWorkflowPayload = ({
 
   return {
     ...record,
-    status: statusCode,
-    currentuserstatus: statusCode,
+    status: overallRequestStatus,
+    currentuserstatus: nextCurrentUserStatus,
     updatedat: now,
     assigneddate: now,
-    currentuser: empNumber,
-    currentusername: currentUserName,
+    currentuser: nextCurrentUser,
+    currentusername: nextCurrentUserName,
     approvar: updatedApprovar,
-    history: [...(record.history || []), newHistoryEntry],
+    history: [...(record.history || []), newHistoryEntry], // Appending action entry into history
     attachment: [],
     fyi: [],
     email: {},
