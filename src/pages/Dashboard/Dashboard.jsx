@@ -9,6 +9,8 @@ import {
   advancedSearch
 } from "../../services/requestservice";
 import { useNavigate } from "react-router-dom";
+import { formatDate, getInitials } from "../../utils/utils";
+import ChatWidget from "../../components/ChatWidget/ChatWidget";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("pending"); // Track 'pending' or 'initiated'
@@ -234,6 +236,7 @@ export default function Dashboard() {
 
   const currentTabInfo = tabConfig[activeTab] || tabConfig.pending;
   const currentRequests = currentTabInfo.data;
+  const userInfo = JSON.parse(localStorage.getItem("userInfo") || "{}");
 
   return (
     <div className="app-container">
@@ -247,10 +250,10 @@ export default function Dashboard() {
         {/* Right Section Container: User Info + Logout */}
         <div className="nav-right-group">
           <div className="nav-user-profile">
-            <div className="avatar-circle">ST</div>
+            <div className="avatar-circle">{getInitials(userInfo.Display_Name)}</div>
             <div className="user-details-nav">
-              <span className="user-name">Sriram There</span>
-              <span className="user-role">AM / ID: 100203</span>
+              <span className="user-name">{userInfo.Display_Name}</span>
+              <span className="user-role">{userInfo.Grade_Code + " / " + userInfo.EMPLOYEE_NUMBER}</span>
             </div>
           </div>
 
@@ -382,14 +385,25 @@ export default function Dashboard() {
               <div className="table-responsive">
                 <table className="custom-table">
                   <thead>
-                    <tr>
-                      <th>Reference No</th>
-                      <th>Subject</th>
-                      <th>Memo Type</th>
-                      <th>Initiator</th>
-                      <th>Last Updated</th>
-                      <th>Pending Since</th>
-                    </tr>
+                    {activeTab === "rejected" ? (
+                      <tr>
+                        <th>Reference No</th>
+                        <th>Subject</th>
+                        <th>Memo Type</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Rejected Date</th>
+                      </tr>
+                    ) : (
+                      <tr>
+                        <th>Reference No</th>
+                        <th>Subject</th>
+                        <th>Memo Type</th>
+                        <th>Initiator</th>
+                        <th>Last Updated</th>
+                        <th>Pending Since</th>
+                      </tr>
+                    )}
                   </thead>
                   <tbody>
                     {currentRequests.map((item) => (
@@ -401,13 +415,27 @@ export default function Dashboard() {
                         <td className="font-highlight">{item.axisrequestid}</td>
                         <td>{item.subject}</td>
                         <td>{item.memoname}</td>
-                        <td>{item.initiatorname}</td>
-                        <td>{item.updatedat?.split(" ")[0]}</td>
-                        <td>
-                          <span className="badge-pending">
-                            {calculatePendingDays(item.assigneddate)} days
-                          </span>
-                        </td>
+                        {activeTab === "rejected" ? (
+                          <>
+                            <td>{item.initiatordept}</td>
+                            <td>
+                              <span style={{ color: "#e11d48", fontWeight: "600" }}>
+                                Rejected
+                              </span>
+                            </td>
+                            <td>{formatDate(item.updatedat)}</td>
+                          </>
+                        ) : (
+                          <>
+                            <td>{item.initiatorname}</td>
+                            <td>{item.updatedat?.split(" ")[0]}</td>
+                            <td>
+                              <span className="badge-pending">
+                                {calculatePendingDays(item.assigneddate)} days
+                              </span>
+                            </td>
+                          </>
+                        )}
                       </tr>
                     ))}
                   </tbody>
@@ -416,6 +444,12 @@ export default function Dashboard() {
             )}
           </div>
         </main>
+      </div>
+      <div className="app-container">
+        {/* ... Header and Workspace layout ... */}
+
+        {/* Floating Chat Copilot Widget */}
+        <ChatWidget />
       </div>
     </div>
   );

@@ -61,12 +61,11 @@ export default function NFWorkflow() {
       setIsApproving(true);
 
       // Retrieve logged-in user info from localStorage or fallback
-      const empNumber = localStorage.getItem("empNumber") || "100205";
       const storedUserInfo = JSON.parse(
         localStorage.getItem("userInfo") || "{}",
       );
-      const currentUserName = storedUserInfo.Display_Name || "Suresh Injeti";
-
+      const empNumber = storedUserInfo.EMPLOYEE_NUMBER || localStorage.getItem("empNumber");
+      const currentUserName = storedUserInfo.Display_Name || "User";
       // Construct full approval payload via builder utility
       const payload = buildWorkflowPayload({
         record,
