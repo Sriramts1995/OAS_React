@@ -188,12 +188,33 @@ export default function Dashboard() {
     }
   };
 
+  // Replaces previous calculation with exact Volt MX Math.round logic
   const calculatePendingDays = (assignedDateStr) => {
     if (!assignedDateStr) return "N/A";
-    const assignedDate = new Date(assignedDateStr);
+    const cleanStr = assignedDateStr.replace(" ", "T");
+    const assignedDate = new Date(cleanStr);
     const currentDate = new Date();
-    const diffTime = Math.abs(currentDate - assignedDate);
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const timeDifference = currentDate - assignedDate;
+    const daysDifference = timeDifference / (1000 * 3600 * 24);
+    return Math.round(daysDifference);
+  };
+
+  // Status Badge Formatter for Dashboard Tabs
+  const renderStatusBadge = (statusCode) => {
+    const code = String(statusCode);
+    if (code === "1") {
+      return <span style={{ color: "#d97706", fontWeight: "600" }}>Pending</span>;
+    }
+    if (code === "4") {
+      return <span style={{ color: "#7c3aed", fontWeight: "600" }}>Approved</span>;
+    }
+    if (code === "5") {
+      return <span style={{ color: "#e11d48", fontWeight: "600" }}>Rejected</span>;
+    }
+    if (code === "3") {
+      return <span style={{ color: "#d97706", fontWeight: "600" }}>Sent Back</span>;
+    }
+    return <span>{statusCode}</span>;
   };
 
   const navigateToCreate = () => {
@@ -403,13 +424,22 @@ export default function Dashboard() {
                         <th>Pending With</th>
                         <th>Last Updated</th>
                       </tr>
+                    ) : activeTab === "initiated" ? (
+                      <tr>
+                        <th>Reference No</th>
+                        <th>Subject</th>
+                        <th>Memo Type</th>
+                        <th>Current Status</th>
+                        <th>Pending With</th>
+                        <th>Pending Days</th>
+                      </tr>
                     ) : (
                       <tr>
                         <th>Reference No</th>
                         <th>Subject</th>
                         <th>Memo Type</th>
                         <th>Initiator</th>
-                        <th>Last Updated</th>
+                        <th>Department</th>
                         <th>Pending Since</th>
                       </tr>
                     )}
@@ -427,36 +457,40 @@ export default function Dashboard() {
                           <>
                             <td>{item.memoname}</td>
                             <td>{item.initiatordept}</td>
-                            <td>
-                              <span style={{ color: "#e11d48", fontWeight: "600" }}>
-                                Rejected
-                              </span>
-                            </td>
+                            <td>{renderStatusBadge(item.status)}</td>
                             <td>{formatDate(item.updatedat)}</td>
                           </>
                         ) : activeTab === "approved" ? (
                           <>
                             <td>{item.initiatordept}</td>
+                            <td>{renderStatusBadge(item.status)}</td>
                             <td>
-                              <span
-                                style={{
-                                  color: String(item.status) === "4" ? "#7c3aed" : "#e11d48",
-                                  fontWeight: "600",
-                                }}
-                              >
-                                {String(item.status) === "4" ? "Approved" : "Pending"}
-                              </span>
-                            </td>
-                            <td>
-                              {String(item.status) === "4" ? "" : item.currentusername || ""}
+                              {String(item.status) === "1" ? item.currentusername || "" : ""}
                             </td>
                             <td>{formatDate(item.updatedat)}</td>
+                          </>
+                        ) : activeTab === "initiated" ? (
+                          <>
+                            <td>{item.memoname}</td>
+                            <td>{renderStatusBadge(item.status)}</td>
+                            <td>
+                              {String(item.status) === "1" ? item.currentusername || "" : ""}
+                            </td>
+                            <td>
+                              {String(item.status) === "1" ? (
+                                <span className="badge-pending">
+                                  {calculatePendingDays(item.assigneddate)} days
+                                </span>
+                              ) : (
+                                ""
+                              )}
+                            </td>
                           </>
                         ) : (
                           <>
                             <td>{item.memoname}</td>
                             <td>{item.initiatorname}</td>
-                            <td>{item.updatedat?.split(" ")[0]}</td>
+                            <td>{item.initiatordept}</td>
                             <td>
                               <span className="badge-pending">
                                 {calculatePendingDays(item.assigneddate)} days
