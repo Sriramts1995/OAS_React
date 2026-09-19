@@ -2,6 +2,98 @@
 import { REQUEST_STATUS, MEMO_TYPES } from "./constants";
 
 /**
+ * Helper to construct dynamic email objects matching Volt MX emailobject.js logic
+ */
+const buildDynamicEmailObject = ({
+  event, // "create", "approved", "lastapproved", "rejected", "sendback"
+  subject,
+  axisrequestid = "",
+  approvarList = [],
+  initiatorEmail = "",
+  actingUserName = "",
+}) => {
+  // Find initiator email from sequence 0 if not provided
+  const initiatorEntry = approvarList.find((a) => a.sequence === 0);
+  const targetInitiatorEmail = initiatorEmail || initiatorEntry?.email || "";
+
+  let to = "";
+  let cc = "";
+  let emailSubject = "";
+  let contexttext = "";
+  let emailStatus = REQUEST_STATUS.PENDING;
+
+  // 1. CREATE / RESUBMIT
+  if (event === "create") {
+    const firstApprover = approvarList.find((a) => a.sequence === 1) || {};
+    to = firstApprover.email || "";
+    cc = targetInitiatorEmail;
+    emailSubject = `OAS Submitted: ${subject}`;
+    emailStatus = REQUEST_STATUS.PENDING;
+    contexttext = "You are required to take action in the Online Approval System.";
+  }
+  // 2. INTERMEDIATE APPROVER APPROVED
+  else if (event === "approved") {
+    const nextPending = approvarList.find((a) => a.sequence > 0 && a.status === REQUEST_STATUS.PENDING) || {};
+    to = nextPending.email || "";
+    cc = targetInitiatorEmail;
+    emailSubject = `OAS Pending: ${subject}`;
+    emailStatus = REQUEST_STATUS.PENDING;
+    contexttext = "You are required to take action in the Online Approval System.";
+  }
+  // 3. FINAL APPROVER APPROVED
+  else if (event === "lastapproved") {
+    to = targetInitiatorEmail;
+    // Group all sequence > 0 approver emails
+    const approverEmails = approvarList
+      .filter((a) => a.sequence > 0 && a.email)
+      .map((a) => a.email);
+    cc = [...new Set(approverEmails)].join(",");
+    emailSubject = `OAS Approved: ${subject}`;
+    emailStatus = REQUEST_STATUS.APPROVED;
+    contexttext = `Reference No ${axisrequestid} is approved and closed.`;
+  }
+  // 4. REJECTED
+  else if (event === "rejected") {
+    to = targetInitiatorEmail;
+    // Group emails of approvers who took action (approved or rejected)
+    const processedEmails = approvarList
+      .filter(
+        (a) =>
+          a.sequence > 0 &&
+          (a.status === REQUEST_STATUS.APPROVED || a.status === REQUEST_STATUS.REJECTED) &&
+          a.email
+      )
+      .map((a) => a.email);
+    cc = [...new Set(processedEmails)].join(",");
+    emailSubject = `OAS Rejected: ${subject}`;
+    emailStatus = REQUEST_STATUS.REJECTED;
+    contexttext = `Reference No ${axisrequestid} is rejected by ${actingUserName}`;
+  }
+  // 5. SEND BACK
+  else if (event === "sendback") {
+    to = targetInitiatorEmail;
+    // Group emails of sendback approvers (or acting approver)
+    const sendbackEmails = approvarList
+      .filter((a) => a.sequence > 0 && a.status === REQUEST_STATUS.SEND_BACK && a.email)
+      .map((a) => a.email);
+    cc = sendbackEmails.length > 0 ? [...new Set(sendbackEmails)].join(",") : "";
+    emailSubject = `OAS sent to initiator: ${subject}`;
+    emailStatus = REQUEST_STATUS.SEND_BACK;
+    contexttext = `Reference No ${axisrequestid} is sent back to you by ${actingUserName}`;
+  }
+
+  return {
+    to,
+    cc,
+    subject: emailSubject,
+    memotype: MEMO_TYPES.NON_FINANCIAL,
+    status: emailStatus,
+    contexttext,
+    flowtype: "",
+  };
+};
+
+/**
  * Construct JSON payload for new request submission
  */
 export const buildSubmitPayload = ({
@@ -53,6 +145,14 @@ export const buildSubmitPayload = ({
     ...dynamicApproversPayload,
   ];
 
+  // Dynamic email object for creation
+  const emailPayload = buildDynamicEmailObject({
+    event: "create",
+    subject,
+    approvarList: fullApproverList,
+    initiatorEmail: userInfo.EMAIL_ADDRESS || "",
+  });
+
   return {
     initiatorid: initiatorId,
     initiatorname: initiatorName,
@@ -102,16 +202,7 @@ export const buildSubmitPayload = ({
     currentuser: approvers[0].empId,
     currentusername: approvers[0].empName,
     fyi: [],
-    //email: {},
-    email: {
-      to: "sureshkumar.injeti@hcl-software.com",
-      cc: "sriram.there@hcl-software.com",
-      subject: "From react app",
-      memotype: "Non - Financial",
-      status: 1,
-      contexttext: "You are required to take action in the Online Approval System.",
-      flowtype: "",
-    },
+    email: emailPayload,
   };
 };
 
@@ -140,9 +231,11 @@ export const buildWorkflowPayload = ({
   let nextCurrentUserStatus = statusCode;
   let overallRequestStatus = statusCode;
   let updatedApprovar = [];
+  let emailEvent = "approved";
 
   // 1. SEND BACK FLOW (statusCode === 3)
   if (statusCode === REQUEST_STATUS.SEND_BACK) {
+    emailEvent = "sendback";
     nextCurrentUser = record.initiatorid;
     nextCurrentUserName = record.initiatorname;
     nextCurrentUserStatus = REQUEST_STATUS.SEND_BACK; // 3
@@ -187,7 +280,21 @@ export const buildWorkflowPayload = ({
 
     updatedApprovar = [updatedInitiator, ...skippedApprovers, ...freshLineup];
   } 
-  // 2. APPROVE / REJECT FLOW
+  // 2. REJECT FLOW
+  else if (statusCode === REQUEST_STATUS.REJECTED) {
+    emailEvent = "rejected";
+    updatedApprovar = approverList.map((app, index) => {
+      if (index === activeIndex) {
+        return {
+          ...app,
+          status: statusCode,
+          updatedat: now,
+        };
+      }
+      return app;
+    });
+  }
+  // 3. APPROVE FLOW
   else {
     updatedApprovar = approverList.map((app, index) => {
       if (index === activeIndex) {
@@ -200,28 +307,36 @@ export const buildWorkflowPayload = ({
       return app;
     });
 
-    // Handle sequential approver progression upon approval
-    if (statusCode === REQUEST_STATUS.APPROVED) {
-      const nextApproverIndex = activeIndex + 1;
-      if (nextApproverIndex < approverList.length) {
-        // Transition next approver status from 0 to 1 (Pending)
-        const nextApprover = approverList[nextApproverIndex];
-        updatedApprovar[nextApproverIndex] = {
-          ...nextApprover,
-          status: REQUEST_STATUS.PENDING, // 1
-          updatedat: now,
-        };
-        nextCurrentUser = nextApprover.approvarid;
-        nextCurrentUserName = nextApprover.approvarname;
-        nextCurrentUserStatus = REQUEST_STATUS.PENDING; // 1
-        overallRequestStatus = REQUEST_STATUS.PENDING; // 1
-      } else {
-        // Final approver in line approved -> overall request closed & approved
-        overallRequestStatus = REQUEST_STATUS.APPROVED; // 4
-        nextCurrentUserStatus = REQUEST_STATUS.APPROVED; // 4
-      }
+    const nextApproverIndex = activeIndex + 1;
+    if (nextApproverIndex < approverList.length) {
+      // Transition next approver status from 0 to 1 (Pending)
+      emailEvent = "approved";
+      const nextApprover = approverList[nextApproverIndex];
+      updatedApprovar[nextApproverIndex] = {
+        ...nextApprover,
+        status: REQUEST_STATUS.PENDING, // 1
+        updatedat: now,
+      };
+      nextCurrentUser = nextApprover.approvarid;
+      nextCurrentUserName = nextApprover.approvarname;
+      nextCurrentUserStatus = REQUEST_STATUS.PENDING; // 1
+      overallRequestStatus = REQUEST_STATUS.PENDING; // 1
+    } else {
+      // Final approver in line approved -> overall request closed & approved
+      emailEvent = "lastapproved";
+      overallRequestStatus = REQUEST_STATUS.APPROVED; // 4
+      nextCurrentUserStatus = REQUEST_STATUS.APPROVED; // 4
     }
   }
+
+  // Construct dynamic email payload
+  const emailPayload = buildDynamicEmailObject({
+    event: emailEvent,
+    subject: record.subject,
+    axisrequestid: record.axisrequestid,
+    approvarList: updatedApprovar,
+    actingUserName: currentUserName,
+  });
 
   // Construct new history entry for approver action
   const newHistoryEntry = {
@@ -250,16 +365,7 @@ export const buildWorkflowPayload = ({
     history: [...(record.history || []), newHistoryEntry], // Appending action entry into history
     attachment: [],
     fyi: [],
-    //email: {},
-    email: {
-      to: "sureshkumar.injeti@hcl-software.com",
-      cc: "sriram.there@hcl-software.com",
-      subject: "From react app",
-      memotype: "Non - Financial",
-      status: statusCode,
-      contexttext: "You are required to take action in the Online Approval System.",
-      flowtype: "",
-    },
+    email: emailPayload,
   };
 };
 
@@ -305,6 +411,14 @@ export const buildResubmitPayload = ({
     return det;
   });
 
+  // Dynamic email payload for resubmission
+  const emailPayload = buildDynamicEmailObject({
+    event: "create",
+    subject: subject,
+    axisrequestid: record.axisrequestid,
+    approvarList: updatedApprovar,
+  });
+
   // Construct history entry for resubmission
   const newHistoryEntry = {
     fromid: empNumber,
@@ -335,15 +449,6 @@ export const buildResubmitPayload = ({
     history: [...(record.history || []), newHistoryEntry],
     attachment: [],
     fyi: [],
-    //email: {},
-    email: {
-      to: "sureshkumar.injeti@hcl-software.com",
-      cc: "sriram.there@hcl-software.com",
-      subject: "Resubmitted from react app",
-      memotype: "Non - Financial",
-      status: REQUEST_STATUS.PENDING,
-      contexttext: "You are required to take action in the Online Approval System.",
-      flowtype: "",
-    },
+    email: emailPayload,
   };
 };

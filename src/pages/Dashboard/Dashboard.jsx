@@ -274,7 +274,7 @@ export default function Dashboard() {
             <div className="avatar-circle">{getInitials(userInfo.Display_Name)}</div>
             <div className="user-details-nav">
               <span className="user-name">{userInfo.Display_Name}</span>
-              <span className="user-role">{userInfo.Grade_Code + " / " + userInfo.EMPLOYEE_NUMBER}</span>
+              <span className="user-role">{!userInfo.Grade_Code ? "AM" + " / " + userInfo.EMPLOYEE_NUMBER : userInfo.Grade_Code + " / " + userInfo.EMPLOYEE_NUMBER}</span>
             </div>
           </div>
 

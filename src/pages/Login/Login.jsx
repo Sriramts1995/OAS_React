@@ -64,7 +64,7 @@ export default function Login() {
         </button>
 
         <div className="card-footer">
-          <p>© Axis Bank Ltd. All rights reserved.</p>
+          <p>© Corporate Bank Ltd. All rights reserved.</p>
         </div>
       </div>
     </div>
