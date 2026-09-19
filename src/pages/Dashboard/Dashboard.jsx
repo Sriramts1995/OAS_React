@@ -394,6 +394,15 @@ export default function Dashboard() {
                         <th>Status</th>
                         <th>Rejected Date</th>
                       </tr>
+                    ) : activeTab === "approved" ? (
+                      <tr>
+                        <th>Reference No</th>
+                        <th>Subject</th>
+                        <th>Department</th>
+                        <th>Current Status</th>
+                        <th>Pending With</th>
+                        <th>Last Updated</th>
+                      </tr>
                     ) : (
                       <tr>
                         <th>Reference No</th>
@@ -414,9 +423,9 @@ export default function Dashboard() {
                       >
                         <td className="font-highlight">{item.axisrequestid}</td>
                         <td>{item.subject}</td>
-                        <td>{item.memoname}</td>
                         {activeTab === "rejected" ? (
                           <>
+                            <td>{item.memoname}</td>
                             <td>{item.initiatordept}</td>
                             <td>
                               <span style={{ color: "#e11d48", fontWeight: "600" }}>
@@ -425,8 +434,27 @@ export default function Dashboard() {
                             </td>
                             <td>{formatDate(item.updatedat)}</td>
                           </>
+                        ) : activeTab === "approved" ? (
+                          <>
+                            <td>{item.initiatordept}</td>
+                            <td>
+                              <span
+                                style={{
+                                  color: String(item.status) === "4" ? "#7c3aed" : "#e11d48",
+                                  fontWeight: "600",
+                                }}
+                              >
+                                {String(item.status) === "4" ? "Approved" : "Pending"}
+                              </span>
+                            </td>
+                            <td>
+                              {String(item.status) === "4" ? "" : item.currentusername || ""}
+                            </td>
+                            <td>{formatDate(item.updatedat)}</td>
+                          </>
                         ) : (
                           <>
+                            <td>{item.memoname}</td>
                             <td>{item.initiatorname}</td>
                             <td>{item.updatedat?.split(" ")[0]}</td>
                             <td>
