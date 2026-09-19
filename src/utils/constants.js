@@ -13,6 +13,6 @@ export const MEMO_TYPES = {
 
 export const UI_LIMITS = {
   MAX_APPROVER_ROWS: 3,
-  DEFAULT_PAGE_SIZE: 10,
+  DEFAULT_PAGE_SIZE: 0,
   SUBJECT_MAX_LENGTH: 255,
 };

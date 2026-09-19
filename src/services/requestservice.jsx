@@ -1,11 +1,12 @@
 import axios from "axios";
 import { COMMON_HEADERS, VOLTMX_CONFIG } from "../config/voltmxConfig";
+import { UI_LIMITS } from "../utils/constants";
 
 const SERVICES_URL = VOLTMX_CONFIG.BASE_URL;
 
 export const getPendingListByEmpId = async (
   empnumber = "100203",
-  rowSize = 10
+  rowSize = UI_LIMITS.DEFAULT_PAGE_SIZE
 ) => {
   const token = localStorage.getItem("claims_token");
 
@@ -30,7 +31,7 @@ export const getPendingListByEmpId = async (
 
 export const getInitiatedListByEmpId = async (
   empnumber = "100203",
-  rowSize = 10
+  rowSize = UI_LIMITS.DEFAULT_PAGE_SIZE
 ) => {
   const token = localStorage.getItem("claims_token");
 
@@ -55,7 +56,7 @@ export const getInitiatedListByEmpId = async (
 
 export const getApprovedListByEmpId = async (
   empnumber = "100203",
-  rowSize = 10
+  rowSize = UI_LIMITS.DEFAULT_PAGE_SIZE
 ) => {
   const token = localStorage.getItem("claims_token");
 
@@ -80,7 +81,7 @@ export const getApprovedListByEmpId = async (
 
 export const getRejectedListByEmpId = async (
   empnumber = "100203",
-  rowSize = 10
+  rowSize = UI_LIMITS.DEFAULT_PAGE_SIZE
 ) => {
   const token = localStorage.getItem("claims_token");
 
