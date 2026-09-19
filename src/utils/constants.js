@@ -2,6 +2,7 @@
 
 export const REQUEST_STATUS = {
   PENDING: 1,
+  SEND_BACK: 3,
   APPROVED: 4,
   REJECTED: 5,
   INITIATED_SEQUENCE: 20,

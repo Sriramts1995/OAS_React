@@ -1,9 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { approveorrejectRequest } from "../../../services/requestservice";
 import InputField from "../../../components/InputField";
 import TextAreaField from "../../../components/TextAreaField";
-import { buildWorkflowPayload } from "../../../utils/payloadBuilder";
+import { buildWorkflowPayload, buildResubmitPayload } from "../../../utils/payloadBuilder";
 import { REQUEST_STATUS } from "../../../utils/constants";
 import "./NFWorkflow.css";
 
@@ -15,21 +15,18 @@ export default function NFWorkflow() {
   const [approverRemarks, setApproverRemarks] = useState(""); // Default to empty string
   const [isApproving, setIsApproving] = useState(false);
   const [isRejecting, setIsRejecting] = useState(false);
+  const [isSendingBack, setIsSendingBack] = useState(false);
+  const [isResubmitting, setIsResubmitting] = useState(false);
 
   // Extract response data passed via React Router location state
   const requestData = location.state?.requestData;
   const record = requestData?.records?.[0];
   const activeTab = location.state?.activeTab;
 
-  // Extract all dynamic approvers (Sequence 1, 2, 3...)
-  const displayApprovers =
-    record?.approvar?.filter((app) => app.sequence > 0) || [];
-
-  // Format existing history comments into "From: "id", "name" and Comments: """
-  const existingApproverComments = (record?.history || [])
-    .filter((h) => h.fromstatus !== 0 && h.fromstatus !== 20 && h.remarks) // Exclude initial tracking entries
-    .map((h) => `From: "${h.fromid}", "${h.fromname}" and Comments: "${h.remarks}"`)
-    .join("\n");
+  // Editable state fields for Initiator Resubmission (Status 3)
+  const [editSubject, setEditSubject] = useState("");
+  const [editDetails, setEditDetails] = useState("");
+  const [editRemarks, setEditRemarks] = useState("");
 
   // Helper function to decode Base64 'description' field
   const decodeBase64 = (base64Str) => {
@@ -53,6 +50,33 @@ export default function NFWorkflow() {
   const rawDescription = record?.requestdetails?.[0]?.description || "";
   const decodedDetails = decodeBase64(rawDescription);
 
+  // Initialize editable state when record is loaded
+  useEffect(() => {
+    if (record) {
+      setEditSubject(record.subject || "");
+      setEditDetails(decodedDetails || "");
+      setEditRemarks(record.initiatorremarks || "");
+    }
+  }, [record, decodedDetails]);
+
+  // Check if current user is initiator and request is in Sent Back status (3)
+  const storedUserInfo = JSON.parse(
+    localStorage.getItem("userInfo") || "{}",
+  );
+  const loggedInEmpId = storedUserInfo.EMPLOYEE_NUMBER || localStorage.getItem("empNumber");
+  const isSentBackToInitiator =
+    String(record?.status) === "3" && record?.initiatorid === loggedInEmpId;
+
+  // Extract all dynamic approvers (Sequence 1, 2, 3...)
+  const displayApprovers =
+    record?.approvar?.filter((app) => app.sequence > 0) || [];
+
+  // Format existing history comments into "From: "id", "name" and Comments: """
+  const existingApproverComments = (record?.history || [])
+    .filter((h) => h.fromstatus !== 0 && h.fromstatus !== 20 && h.remarks) // Exclude initial tracking entries
+    .map((h) => `From: "${h.fromid}", "${h.fromname}" and Comments: "${h.remarks}"`)
+    .join("\n");
+
   // Handle Approve Action
   const handleApprove = async () => {
     if (!record) return;
@@ -61,11 +85,9 @@ export default function NFWorkflow() {
       setIsApproving(true);
 
       // Retrieve logged-in user info from localStorage or fallback
-      const storedUserInfo = JSON.parse(
-        localStorage.getItem("userInfo") || "{}",
-      );
       const empNumber = storedUserInfo.EMPLOYEE_NUMBER || localStorage.getItem("empNumber");
       const currentUserName = storedUserInfo.Display_Name || "User";
+
       // Construct full approval payload via builder utility
       const payload = buildWorkflowPayload({
         record,
@@ -97,11 +119,8 @@ export default function NFWorkflow() {
       setIsRejecting(true);
 
       // Retrieve logged-in user info from localStorage or fallback
-      const empNumber = localStorage.getItem("empNumber") || "100205";
-      const storedUserInfo = JSON.parse(
-        localStorage.getItem("userInfo") || "{}",
-      );
-      const currentUserName = storedUserInfo.Display_Name || "Suresh Injeti";
+      const empNumber = storedUserInfo.EMPLOYEE_NUMBER || localStorage.getItem("empNumber");
+      const currentUserName = storedUserInfo.Display_Name || "User";
 
       // Construct full rejection payload via builder utility
       const payload = buildWorkflowPayload({
@@ -123,6 +142,76 @@ export default function NFWorkflow() {
       alert("Failed to reject request. Please try again.");
     } finally {
       setIsRejecting(false);
+    }
+  };
+
+  // Handle Send Back Action (Status 3)
+  const handleSendBack = async () => {
+    if (!record) return;
+
+    try {
+      setIsSendingBack(true);
+
+      const empNumber = storedUserInfo.EMPLOYEE_NUMBER || localStorage.getItem("empNumber");
+      const currentUserName = storedUserInfo.Display_Name || "User";
+
+      const payload = buildWorkflowPayload({
+        record,
+        statusCode: REQUEST_STATUS.SEND_BACK,
+        approverRemarks,
+        empNumber,
+        currentUserName,
+      });
+
+      console.log("Sending Send Back Payload:", payload);
+      const response = await approveorrejectRequest(payload);
+      console.log("Send Back Response:", response.data);
+
+      alert("Request Sent Back to Initiator Successfully!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Error sending back request:", error);
+      alert("Failed to send back request. Please try again.");
+    } finally {
+      setIsSendingBack(false);
+    }
+  };
+
+  // Handle Resubmit / Update Action by Initiator (Status 3 -> Status 1)
+  const handleResubmit = async () => {
+    if (!record) return;
+
+    if (!editSubject.trim() || !editDetails.trim()) {
+      alert("Subject Line and Details cannot be empty.");
+      return;
+    }
+
+    try {
+      setIsResubmitting(true);
+
+      const empNumber = storedUserInfo.EMPLOYEE_NUMBER || localStorage.getItem("empNumber");
+      const currentUserName = storedUserInfo.Display_Name || "User";
+
+      const payload = buildResubmitPayload({
+        record,
+        subject: editSubject,
+        details: editDetails,
+        remarks: editRemarks,
+        empNumber,
+        currentUserName,
+      });
+
+      console.log("Sending Resubmit Payload:", payload);
+      const response = await approveorrejectRequest(payload);
+      console.log("Resubmit Response:", response.data);
+
+      alert("Request Resubmitted Successfully!");
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Error resubmitting request:", error);
+      alert("Failed to resubmit request. Please try again.");
+    } finally {
+      setIsResubmitting(false);
     }
   };
 
@@ -157,6 +246,8 @@ export default function NFWorkflow() {
   const isOverallStatusEligibleForTickmark =
     record.status === 1 || record.status === 4 || record.status === REQUEST_STATUS.PENDING || record.status === REQUEST_STATUS.APPROVED;
 
+  const isBusy = isApproving || isRejecting || isSendingBack || isResubmitting;
+
   return (
     <div className="create-page-container">
       {/* Top Header */}
@@ -175,35 +266,60 @@ export default function NFWorkflow() {
           </span>
         </div>
 
-        {activeTab === "pending" && (
-          <div className="header-actions">
-            <button
-              type="button"
-              className="btn-outline"
-              onClick={() => navigate("/dashboard")}
-            >
-              Cancel
-            </button>
+        {/* Action Header Buttons */}
+        <div className="header-actions">
+          <button
+            type="button"
+            className="btn-outline"
+            onClick={() => navigate("/dashboard")}
+          >
+            Cancel
+          </button>
 
+          {/* INITIATOR RESUBMIT ACTION (Status 3) */}
+          {isSentBackToInitiator ? (
             <button
               type="button"
               className="btn-submit"
-              onClick={handleApprove}
-              disabled={isApproving || isRejecting}
+              onClick={handleResubmit}
+              disabled={isBusy}
             >
-              {isApproving ? "Approving..." : "Approve"}
+              {isResubmitting ? "Resubmitting..." : "Resubmit Request"}
             </button>
+          ) : (
+            /* APPROVER PENDING ACTIONS (Status 1) */
+            activeTab === "pending" && (
+              <>
+                <button
+                  type="button"
+                  className="btn-submit"
+                  onClick={handleApprove}
+                  disabled={isBusy}
+                >
+                  {isApproving ? "Approving..." : "Approve"}
+                </button>
 
-            <button
-              type="button"
-              className="btn-submit"
-              onClick={handleReject}
-              disabled={isApproving || isRejecting}
-            >
-              {isRejecting ? "Rejecting..." : "Reject"}
-            </button>
-          </div>
-        )}
+                <button
+                  type="button"
+                  className="btn-submit"
+                  onClick={handleReject}
+                  disabled={isBusy}
+                >
+                  {isRejecting ? "Rejecting..." : "Reject"}
+                </button>
+
+                <button
+                  type="button"
+                  className="btn-submit"
+                  onClick={handleSendBack}
+                  disabled={isBusy}
+                >
+                  {isSendingBack ? "Sending Back..." : "Send Back"}
+                </button>
+              </>
+            )
+          )}
+        </div>
       </header>
 
       {/* Main Form Content */}
@@ -320,9 +436,14 @@ export default function NFWorkflow() {
           <div className="form-section">
             <InputField
               label="Subject Line"
-              value={record.subject || ""}
-              readOnly
-              disabled
+              value={isSentBackToInitiator ? editSubject : record.subject || ""}
+              onChange={
+                isSentBackToInitiator
+                  ? (e) => setEditSubject(e.target.value)
+                  : undefined
+              }
+              readOnly={!isSentBackToInitiator}
+              disabled={!isSentBackToInitiator}
             />
           </div>
 
@@ -331,9 +452,14 @@ export default function NFWorkflow() {
             <TextAreaField
               label="Details"
               rows={6}
-              value={decodedDetails}
-              readOnly
-              disabled
+              value={isSentBackToInitiator ? editDetails : decodedDetails}
+              onChange={
+                isSentBackToInitiator
+                  ? (e) => setEditDetails(e.target.value)
+                  : undefined
+              }
+              readOnly={!isSentBackToInitiator}
+              disabled={!isSentBackToInitiator}
             />
           </div>
 
@@ -342,9 +468,14 @@ export default function NFWorkflow() {
             <TextAreaField
               label="Initiator Remarks / Recommendations"
               rows={3}
-              value={record.initiatorremarks || ""}
-              readOnly
-              disabled
+              value={isSentBackToInitiator ? editRemarks : record.initiatorremarks || ""}
+              onChange={
+                isSentBackToInitiator
+                  ? (e) => setEditRemarks(e.target.value)
+                  : undefined
+              }
+              readOnly={!isSentBackToInitiator}
+              disabled={!isSentBackToInitiator}
             />
           </div>
 
@@ -370,7 +501,7 @@ export default function NFWorkflow() {
               <TextAreaField
                 label="Approver Remarks / Action Comments"
                 rows={3}
-                placeholder="Enter remarks for approval..."
+                placeholder="Enter remarks for approval or send back..."
                 value={approverRemarks}
                 onChange={(e) => setApproverRemarks(e.target.value)}
               />
