@@ -6,11 +6,16 @@ import { getDetailsByEmpNumber } from "../../services/userservice";
 
 export default function Login() {
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
 
   const handleLogin = async () => {
     try {
-      const loginResponse = await login(email);
+      if(email === "" || password === "") {
+        alert("Please Enter Email and Password.");
+        return;
+      }
+      const loginResponse = await login(email, password);
       console.log("Login Successful:", loginResponse);
 
       const userdetails = await getDetailsByEmpNumber();
@@ -56,6 +61,13 @@ export default function Login() {
             placeholder="Enter Email Address"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+          />
+          <label>Employee Password</label>
+          <input
+            type="password"
+            placeholder="Enter Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 

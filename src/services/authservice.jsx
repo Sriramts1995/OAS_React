@@ -3,7 +3,8 @@ import { COMMON_HEADERS, VOLTMX_CONFIG } from "../config/voltmxConfig";
 
 const AUTH_URL = `${VOLTMX_CONFIG.BASE_URL.replace('/services', '')}/authService/100000002`;
 
-export const login = async (email, password = "Hcl@1234") => {
+//export const login = async (email, password = "Hcl@1234") => {
+export const login = async (email, password) => {
   const formData = new URLSearchParams();
   formData.append("userid", email);
   formData.append("password", password);
