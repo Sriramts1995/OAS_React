@@ -191,3 +191,36 @@ export const getrequestsdetailsById = async (requestId) => {
     }
   );
 }
+
+// DOWNLOAD USER EXCEL REPORT (Download Report Service)
+// Note: Foundry returns JSON with base64 encoded file content, not raw blob
+export const downloadExcelReport = async ({
+  fromDate = "",
+  toDate = "",
+  userNumber = "",
+}) => {
+  const token = localStorage.getItem("claims_token");
+
+  const formData = new URLSearchParams();
+  formData.append(
+    "payload",
+    JSON.stringify({
+      fromDate,
+      toDate,
+      userNumber,
+    })
+  );
+  formData.append("reportType", "1");
+
+  return axios.post(
+    `${SERVICES_URL}/downloadreport/getExcelReport`,
+    formData,
+    {
+      headers: {
+        ...COMMON_HEADERS,
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Voltmx-Authorization": token,
+      },
+    }
+  );
+};

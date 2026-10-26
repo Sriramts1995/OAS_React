@@ -151,12 +151,130 @@
   box-sizing: border-box;
 }
 
-/* Blank View Container for Reports Module */
-.reports-blank-view {
+/* Reports Module Workspace & Card */
+.reports-workspace {
   flex: 1;
+  padding: 28px 32px;
+  display: flex;
+  justify-content: flex-start;
+  align-items: flex-start;
   width: 100%;
-  min-height: calc(100vh - 60px);
-  background-color: var(--body-bg);
+  box-sizing: border-box;
+}
+
+.reports-card {
+  background: #ffffff;
+  width: 100%;
+  max-width: 1100px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+  padding: 28px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.reports-header-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-dark);
+}
+
+.reports-filter-box {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.reports-label {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.required-star {
+  color: #e11d48;
+  margin-left: 2px;
+}
+
+.reports-helper-text {
+  font-size: 0.78rem;
+  color: #e11d48;
+  font-weight: 500;
+  margin-left: 8px;
+}
+
+.reports-date-inputs {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.report-date-field {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.88rem;
+  font-family: inherit;
+  color: var(--text-dark);
+  background: #ffffff;
+  outline: none;
+  width: 220px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.report-date-field:focus {
+  border-color: var(--axis-burgundy);
+  box-shadow: 0 0 0 3px rgba(134, 31, 65, 0.1);
+}
+
+.date-separator {
+  font-size: 0.88rem;
+  color: var(--text-grey);
+  font-weight: 500;
+}
+
+.reports-action-row {
+  display: flex;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.btn-download-report {
+  background: var(--axis-burgundy);
+  color: #ffffff;
+  border: none;
+  padding: 10px 32px;
+  border-radius: 24px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(134, 31, 65, 0.25);
+  transition: all 0.2s ease;
+}
+
+.btn-download-report:hover {
+  background: #6e1734;
+  transform: translateY(-1px);
+}
+
+.btn-download-report:disabled {
+  background: #a37081;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 /* Sidebar */

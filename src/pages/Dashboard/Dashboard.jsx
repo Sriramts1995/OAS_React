@@ -7,6 +7,7 @@ import {
   getApprovedListByEmpId,
   getRejectedListByEmpId,
   advancedSearch,
+  downloadExcelReport,
 } from "../../services/requestservice";
 import { useNavigate } from "react-router-dom";
 import { formatDate, getInitials } from "../../utils/utils";
@@ -24,11 +25,25 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Helper to format today's date into YYYY-MM-DD
+  const getTodayDateStr = () => {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, "0");
+    const dd = String(today.getDate()).padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
+  };
+
+  // Reports Module State
+  const [reportFromDate, setReportFromDate] = useState(getTodayDateStr());
+  const [reportToDate, setReportToDate] = useState(getTodayDateStr());
+  const [isDownloading, setIsDownloading] = useState(false);
+
   // Advance Search Form State
   const [searchFilter, setSearchFilter] = useState("oasnumber"); // 'oasnumber' or 'subject'
   const [searchKeyword, setSearchKeyword] = useState("");
-  const [fromDate, setFromDate] = useState("");
-  const [toDate, setToDate] = useState("");
+  const [fromDate, setFromDate] = useState(getTodayDateStr());
+  const [toDate, setToDate] = useState(getTodayDateStr());
 
   //getApprovedListByEmpId, getRejectedListByEmpId
   useEffect(() => {
@@ -241,6 +256,92 @@ export default function Dashboard() {
     navigate("/");
   };
 
+  // Download User Excel Report with exact ReportsController.js decoding logic
+  const handleDownloadReport = async () => {
+    if (!reportFromDate || !reportToDate) {
+      alert("Please select both From Date and To Date.");
+      return;
+    }
+
+    const from = new Date(reportFromDate);
+    const to = new Date(reportToDate);
+
+    if (from > to) {
+      alert("From Date cannot be greater than To Date.");
+      return;
+    }
+
+    const diffTime = Math.abs(to - from);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays > 93) {
+      alert("Date range cannot be more than 93 days.");
+      return;
+    }
+
+    try {
+      setIsDownloading(true);
+      const empNumber =
+        userInfo.EMPLOYEE_NUMBER ||
+        localStorage.getItem("empNumber") ||
+        "100203";
+
+      const response = await downloadExcelReport({
+        fromDate: reportFromDate,
+        toDate: reportToDate,
+        userNumber: empNumber,
+      });
+
+      console.log("Download Report Response:", response.data);
+
+      let resData = response.data;
+      if (typeof resData === "string") {
+        try {
+          resData = JSON.parse(resData);
+        } catch (e) {
+          console.error("Error parsing response JSON string:", e);
+        }
+      }
+
+      if (!resData?.report?.filecontent) {
+        alert(resData?.errmsg || "No report data found for the selected date range.");
+        return;
+      }
+
+      // Exact decoding implementation matching Volt MX ReportsController.js
+      const base64String = resData.report.filecontent;
+      const base64Data = base64String.replace(/^data:.+;base64,/, ""); // Remove data URL scheme if present
+      const byteCharacters = atob(base64Data); // Decode Base64 string
+      const byteNumbers = new Array(byteCharacters.length);
+
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = window.URL.createObjectURL(blob);
+
+      // Create a link element to download the file matching response.report.filename
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = resData.report.filename || "User Report.xlsx";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading report:", error);
+      alert("Failed to download report. Please check service connection.");
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   // Dynamic UI Labels & Data Mapping for Right Panel
   const tabConfig = {
     pending: {
@@ -324,10 +425,49 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {/* Main Dashboard Workspace or Blank Reports Module */}
+      {/* Main Dashboard Workspace or Reports Module */}
       {currentModule === "reports" ? (
-        <div className="reports-blank-view">
-          {/* Blank view placeholder for Reports module */}
+        <div className="reports-workspace">
+          <div className="reports-card">
+            <h3 className="reports-header-title">Reports</h3>
+
+            <div className="reports-filter-box">
+              <div className="reports-date-group">
+                <label className="reports-label">
+                  Date Range<span className="required-star">*</span>
+                  <span className="reports-helper-text">
+                    You can select a date range of upto 93 days only.
+                  </span>
+                </label>
+                <div className="reports-date-inputs">
+                  <input
+                    type="date"
+                    className="report-date-field"
+                    value={reportFromDate}
+                    onChange={(e) => setReportFromDate(e.target.value)}
+                  />
+                  <span className="date-separator">to</span>
+                  <input
+                    type="date"
+                    className="report-date-field"
+                    value={reportToDate}
+                    onChange={(e) => setReportToDate(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="reports-action-row">
+              <button
+                type="button"
+                className="btn-download-report"
+                onClick={handleDownloadReport}
+                disabled={isDownloading}
+              >
+                {isDownloading ? "Downloading..." : "Download Report"}
+              </button>
+            </div>
+          </div>
         </div>
       ) : (
         <div className="workspace-layout">
@@ -556,8 +696,6 @@ export default function Dashboard() {
       )}
 
       <div className="app-container">
-        {/* ... Header and Workspace layout ... */}
-
         {/* Floating Chat Copilot Widget */}
         <ChatWidget />
       </div>
