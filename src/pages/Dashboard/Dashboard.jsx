@@ -6,7 +6,7 @@ import {
   getInitiatedListByEmpId,
   getApprovedListByEmpId,
   getRejectedListByEmpId,
-  advancedSearch
+  advancedSearch,
 } from "../../services/requestservice";
 import { useNavigate } from "react-router-dom";
 import { formatDate, getInitials } from "../../utils/utils";
@@ -14,6 +14,7 @@ import ChatWidget from "../../components/ChatWidget/ChatWidget";
 import corporateLogo from "../../assets/Corporate_Logo.png";
 
 export default function Dashboard() {
+  const [currentModule, setCurrentModule] = useState("myrequests"); // 'myrequests' or 'reports'
   const [activeTab, setActiveTab] = useState("pending"); // Track 'pending' or 'initiated'
   const [pendingRequests, setPendingRequests] = useState([]);
   const [initiatedRequests, setInitiatedRequests] = useState([]);
@@ -109,7 +110,6 @@ export default function Dashboard() {
     }
   };
 
-
   const fetchRejectedRequests = async () => {
     setLoading(true);
     try {
@@ -158,7 +158,6 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
-
 
   // Tab Switch Handler
   const handleTabChange = (tabName) => {
@@ -211,16 +210,24 @@ export default function Dashboard() {
   const renderStatusBadge = (statusCode) => {
     const code = String(statusCode);
     if (code === "1") {
-      return <span style={{ color: "#d97706", fontWeight: "600" }}>Pending</span>;
+      return (
+        <span style={{ color: "#d97706", fontWeight: "600" }}>Pending</span>
+      );
     }
     if (code === "4") {
-      return <span style={{ color: "#7c3aed", fontWeight: "600" }}>Approved</span>;
+      return (
+        <span style={{ color: "#7c3aed", fontWeight: "600" }}>Approved</span>
+      );
     }
     if (code === "5") {
-      return <span style={{ color: "#e11d48", fontWeight: "600" }}>Rejected</span>;
+      return (
+        <span style={{ color: "#e11d48", fontWeight: "600" }}>Rejected</span>
+      );
     }
     if (code === "3") {
-      return <span style={{ color: "#d97706", fontWeight: "600" }}>Sent Back</span>;
+      return (
+        <span style={{ color: "#d97706", fontWeight: "600" }}>Sent Back</span>
+      );
     }
     return <span>{statusCode}</span>;
   };
@@ -277,245 +284,277 @@ export default function Dashboard() {
           <span className="brand-name">Corporate Bank</span>
         </div>
 
+        {/* Top Header Module Navigation (My Requests / Reports) */}
+        <div className="header-module-nav">
+          <button
+            type="button"
+            className={`module-nav-btn ${currentModule === "myrequests" ? "active" : ""}`}
+            onClick={() => setCurrentModule("myrequests")}
+          >
+            My Requests
+          </button>
+          <button
+            type="button"
+            className={`module-nav-btn ${currentModule === "reports" ? "active" : ""}`}
+            onClick={() => setCurrentModule("reports")}
+          >
+            Reports
+          </button>
+        </div>
+
         {/* Right Section Container: User Info + Logout */}
         <div className="nav-right-group">
           <div className="nav-user-profile">
-            <div className="avatar-circle">{getInitials(userInfo.Display_Name)}</div>
+            <div className="avatar-circle">
+              {getInitials(userInfo.Display_Name)}
+            </div>
             <div className="user-details-nav">
               <span className="user-name">{userInfo.Display_Name}</span>
-              <span className="user-role">{!userInfo.Grade_Code ? "AM" + " / " + userInfo.EMPLOYEE_NUMBER : userInfo.Grade_Code + " / " + userInfo.EMPLOYEE_NUMBER}</span>
+              <span className="user-role">
+                {!userInfo.Grade_Code
+                  ? "AM" + " / " + userInfo.EMPLOYEE_NUMBER
+                  : userInfo.Grade_Code + " / " + userInfo.EMPLOYEE_NUMBER}
+              </span>
             </div>
           </div>
 
-          <button
-            type="button"
-            className="btn-logout"
-            onClick={handleLogout}
-          >
+          <button type="button" className="btn-logout" onClick={handleLogout}>
             Logout
           </button>
         </div>
       </header>
 
-      {/* Main Dashboard Workspace */}
-      <div className="workspace-layout">
-        {/* Left Sidebar Menu */}
-        <aside className="sidebar">
-          <button className="btn-create-request" onClick={navigateToCreate}>
-            <span className="plus-icon">+</span> Create New Request
-          </button>
+      {/* Main Dashboard Workspace or Blank Reports Module */}
+      {currentModule === "reports" ? (
+        <div className="reports-blank-view">
+          {/* Blank view placeholder for Reports module */}
+        </div>
+      ) : (
+        <div className="workspace-layout">
+          {/* Left Sidebar Menu */}
+          <aside className="sidebar">
+            <button className="btn-create-request" onClick={navigateToCreate}>
+              <span className="plus-icon"></span> Create New Request
+            </button>
 
-          <nav className="sidebar-menu">
-            <a className={`menu-item ${activeTab === "pending" ? "active" : ""}`}
-              onClick={() => handleTabChange("pending")}
-            >
-              Pending Requests
-              {/*<span className="menu-badge">{pendingRequests.length}</span>*/}
-            </a>
-            <a
-              className={`menu-item ${activeTab === "initiated" ? "active" : ""}`}
-              onClick={() => handleTabChange("initiated")}
-            >
-              Initiated Requests
-              {/*<span className="menu-badge">{initiatedRequests.length}</span>*/}
-            </a>
-            <a
-              className={`menu-item ${activeTab === "approved" ? "active" : ""}`}
-              onClick={() => handleTabChange("approved")}
-            >
-              Approved Requests
-              {/*<span className="menu-badge">{approvedRequests.length}</span>*/}
-            </a>
-            <a
-              className={`menu-item ${activeTab === "rejected" ? "active" : ""}`}
-              onClick={() => handleTabChange("rejected")}
-            >
-              Rejected Requests
-              {/*<span className="menu-badge">{rejectedRequests.length}</span>*/}
-            </a>
-          </nav>
+            <nav className="sidebar-menu">
+              <a
+                className={`menu-item ${activeTab === "pending" ? "active" : ""}`}
+                onClick={() => handleTabChange("pending")}
+              >
+                Pending Requests
+                {/*<span className="menu-badge">{pendingRequests.length}</span>*/}
+              </a>
+              <a
+                className={`menu-item ${activeTab === "initiated" ? "active" : ""}`}
+                onClick={() => handleTabChange("initiated")}
+              >
+                Initiated Requests
+                {/*<span className="menu-badge">{initiatedRequests.length}</span>*/}
+              </a>
+              <a
+                className={`menu-item ${activeTab === "approved" ? "active" : ""}`}
+                onClick={() => handleTabChange("approved")}
+              >
+                Approved Requests
+                {/*<span className="menu-badge">{approvedRequests.length}</span>*/}
+              </a>
+              <a
+                className={`menu-item ${activeTab === "rejected" ? "active" : ""}`}
+                onClick={() => handleTabChange("rejected")}
+              >
+                Rejected Requests
+                {/*<span className="menu-badge">{rejectedRequests.length}</span>*/}
+              </a>
+            </nav>
 
-          {/* Advance Search Panel */}
-          <div className="sidebar-search-card">
-            <h4 className="search-panel-title">Advance Search</h4>
-            <form onSubmit={handleAdvanceSearch} className="search-form">
-              <div className="search-field">
-                <label>Memo Type</label>
-                <input type="text" value="Non-Financial" disabled readOnly />
-              </div>
+            {/* Advance Search Panel */}
+            <div className="sidebar-search-card">
+              <h4 className="search-panel-title">Advance Search</h4>
+              <form onSubmit={handleAdvanceSearch} className="search-form">
+                <div className="search-field">
+                  <label>Memo Type</label>
+                  <input type="text" value="Non-Financial" disabled readOnly />
+                </div>
 
-              <div className="search-field">
-                <label>Search By</label>
-                <select
-                  value={searchFilter}
-                  onChange={(e) => setSearchFilter(e.target.value)}
-                >
-                  <option value="oasnumber">OAS Number</option>
-                  <option value="subject">Subject</option>
-                </select>
-              </div>
+                <div className="search-field">
+                  <label>Search By</label>
+                  <select
+                    value={searchFilter}
+                    onChange={(e) => setSearchFilter(e.target.value)}
+                  >
+                    <option value="oasnumber">OAS Number</option>
+                    <option value="subject">Subject</option>
+                  </select>
+                </div>
 
-              <div className="search-field">
-                <label>Keyword</label>
-                <input
-                  type="text"
-                  placeholder="Enter search value..."
-                  value={searchKeyword}
-                  onChange={(e) => setSearchKeyword(e.target.value)}
-                />
-              </div>
+                <div className="search-field">
+                  <label>Keyword</label>
+                  <input
+                    type="text"
+                    placeholder="Enter search value..."
+                    value={searchKeyword}
+                    onChange={(e) => setSearchKeyword(e.target.value)}
+                  />
+                </div>
 
-              <div className="search-field">
-                <label>From Date</label>
-                <input
-                  type="date"
-                  value={fromDate}
-                  onChange={(e) => setFromDate(e.target.value)}
-                />
-              </div>
+                <div className="search-field">
+                  <label>From Date</label>
+                  <input
+                    type="date"
+                    value={fromDate}
+                    onChange={(e) => setFromDate(e.target.value)}
+                  />
+                </div>
 
-              <div className="search-field">
-                <label>To Date</label>
-                <input
-                  type="date"
-                  value={toDate}
-                  onChange={(e) => setToDate(e.target.value)}
-                />
-              </div>
+                <div className="search-field">
+                  <label>To Date</label>
+                  <input
+                    type="date"
+                    value={toDate}
+                    onChange={(e) => setToDate(e.target.value)}
+                  />
+                </div>
 
-              <button type="submit" className="btn-advance-search">
-                Search
-              </button>
-            </form>
-          </div>
-        </aside>
+                <button type="submit" className="btn-advance-search">
+                  Search
+                </button>
+              </form>
+            </div>
+          </aside>
 
-        {/* Right Content View */}
-        <main className="main-viewport">
-          <div className="welcome-banner">
-            <h2>Welcome to your Dashboard</h2>
-            <p>{currentTabInfo.subtitle}</p>
-          </div>
-
-          <div className="content-card">
-            <div className="card-top">
-              <div className="title-group">
-                <h3>{currentTabInfo.title}</h3>
-                <span className="count-pill">{currentRequests.length}</span>
-              </div>
+          {/* Right Content View */}
+          <main className="main-viewport">
+            <div className="welcome-banner">
+              <h2>Welcome to your Dashboard</h2>
+              <p>{currentTabInfo.subtitle}</p>
             </div>
 
-            {loading ? (
-              <div className="state-msg">Fetching records...</div>
-            ) : currentRequests.length === 0 ? (
-              <div className="state-msg">
-                No {activeTab} requests found.
+            <div className="content-card">
+              <div className="card-top">
+                <div className="title-group">
+                  <h3>{currentTabInfo.title}</h3>
+                  <span className="count-pill">{currentRequests.length}</span>
+                </div>
               </div>
-            ) : (
-              <div className="table-responsive">
-                <table className="custom-table">
-                  <thead>
-                    {activeTab === "rejected" ? (
-                      <tr>
-                        <th>Reference No</th>
-                        <th>Subject</th>
-                        <th>Memo Type</th>
-                        <th>Department</th>
-                        <th>Status</th>
-                        <th>Rejected Date</th>
-                      </tr>
-                    ) : activeTab === "approved" ? (
-                      <tr>
-                        <th>Reference No</th>
-                        <th>Subject</th>
-                        <th>Department</th>
-                        <th>Current Status</th>
-                        <th>Pending With</th>
-                        <th>Last Updated</th>
-                      </tr>
-                    ) : activeTab === "initiated" ? (
-                      <tr>
-                        <th>Reference No</th>
-                        <th>Subject</th>
-                        <th>Memo Type</th>
-                        <th>Current Status</th>
-                        <th>Pending With</th>
-                        <th>Pending Days</th>
-                      </tr>
-                    ) : (
-                      <tr>
-                        <th>Reference No</th>
-                        <th>Subject</th>
-                        <th>Memo Type</th>
-                        <th>Initiator</th>
-                        <th>Department</th>
-                        <th>Pending Since</th>
-                      </tr>
-                    )}
-                  </thead>
-                  <tbody>
-                    {currentRequests.map((item) => (
-                      <tr
-                        key={item.Id}
-                        onClick={() => handleRowClick(item)}
-                        className="clickable-row"
-                      >
-                        <td className="font-highlight">{item.axisrequestid}</td>
-                        <td>{item.subject}</td>
-                        {activeTab === "rejected" ? (
-                          <>
-                            <td>{item.memoname}</td>
-                            <td>{item.initiatordept}</td>
-                            <td>{renderStatusBadge(item.status)}</td>
-                            <td>{formatDate(item.updatedat)}</td>
-                          </>
-                        ) : activeTab === "approved" ? (
-                          <>
-                            <td>{item.initiatordept}</td>
-                            <td>{renderStatusBadge(item.status)}</td>
-                            <td>
-                              {String(item.status) === "1" ? item.currentusername || "" : ""}
-                            </td>
-                            <td>{formatDate(item.updatedat)}</td>
-                          </>
-                        ) : activeTab === "initiated" ? (
-                          <>
-                            <td>{item.memoname}</td>
-                            <td>{renderStatusBadge(item.status)}</td>
-                            <td>
-                              {String(item.status) === "1" ? item.currentusername || "" : ""}
-                            </td>
-                            <td>
-                              {String(item.status) === "1" ? (
+
+              {loading ? (
+                <div className="state-msg">Fetching records...</div>
+              ) : currentRequests.length === 0 ? (
+                <div className="state-msg">No {activeTab} requests found.</div>
+              ) : (
+                <div className="table-responsive">
+                  <table className="custom-table">
+                    <thead>
+                      {activeTab === "rejected" ? (
+                        <tr>
+                          <th>Reference No</th>
+                          <th>Subject</th>
+                          <th>Memo Type</th>
+                          <th>Department</th>
+                          <th>Status</th>
+                          <th>Rejected Date</th>
+                        </tr>
+                      ) : activeTab === "approved" ? (
+                        <tr>
+                          <th>Reference No</th>
+                          <th>Subject</th>
+                          <th>Department</th>
+                          <th>Current Status</th>
+                          <th>Pending With</th>
+                          <th>Last Updated</th>
+                        </tr>
+                      ) : activeTab === "initiated" ? (
+                        <tr>
+                          <th>Reference No</th>
+                          <th>Subject</th>
+                          <th>Memo Type</th>
+                          <th>Current Status</th>
+                          <th>Pending With</th>
+                          <th>Pending Days</th>
+                        </tr>
+                      ) : (
+                        <tr>
+                          <th>Reference No</th>
+                          <th>Subject</th>
+                          <th>Memo Type</th>
+                          <th>Initiator</th>
+                          <th>Department</th>
+                          <th>Pending Since</th>
+                        </tr>
+                      )}
+                    </thead>
+                    <tbody>
+                      {currentRequests.map((item) => (
+                        <tr
+                          key={item.Id}
+                          onClick={() => handleRowClick(item)}
+                          className="clickable-row"
+                        >
+                          <td className="font-highlight">
+                            {item.axisrequestid}
+                          </td>
+                          <td>{item.subject}</td>
+                          {activeTab === "rejected" ? (
+                            <>
+                              <td>{item.memoname}</td>
+                              <td>{item.initiatordept}</td>
+                              <td>{renderStatusBadge(item.status)}</td>
+                              <td>{formatDate(item.updatedat)}</td>
+                            </>
+                          ) : activeTab === "approved" ? (
+                            <>
+                              <td>{item.initiatordept}</td>
+                              <td>{renderStatusBadge(item.status)}</td>
+                              <td>
+                                {String(item.status) === "1"
+                                  ? item.currentusername || ""
+                                  : ""}
+                              </td>
+                              <td>{formatDate(item.updatedat)}</td>
+                            </>
+                          ) : activeTab === "initiated" ? (
+                            <>
+                              <td>{item.memoname}</td>
+                              <td>{renderStatusBadge(item.status)}</td>
+                              <td>
+                                {String(item.status) === "1"
+                                  ? item.currentusername || ""
+                                  : ""}
+                              </td>
+                              <td>
+                                {String(item.status) === "1" ? (
+                                  <span className="badge-pending">
+                                    {formatPendingDays(item.assigneddate)}
+                                  </span>
+                                ) : (
+                                  ""
+                                )}
+                              </td>
+                            </>
+                          ) : (
+                            <>
+                              <td>{item.memoname}</td>
+                              <td>{item.initiatorname}</td>
+                              <td>{item.initiatordept}</td>
+                              <td>
                                 <span className="badge-pending">
                                   {formatPendingDays(item.assigneddate)}
                                 </span>
-                              ) : (
-                                ""
-                              )}
-                            </td>
-                          </>
-                        ) : (
-                          <>
-                            <td>{item.memoname}</td>
-                            <td>{item.initiatorname}</td>
-                            <td>{item.initiatordept}</td>
-                            <td>
-                              <span className="badge-pending">
-                                {formatPendingDays(item.assigneddate)}
-                              </span>
-                            </td>
-                          </>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </main>
-      </div>
+                              </td>
+                            </>
+                          )}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          </main>
+        </div>
+      )}
+
       <div className="app-container">
         {/* ... Header and Workspace layout ... */}
 

@@ -262,13 +262,6 @@ export default function NFWorkflow() {
       {/* Top Header */}
       <header className="create-header">
         <div className="header-left">
-          <button
-            type="button"
-            className="btn-back"
-            onClick={() => navigate("/dashboard")}
-          >
-            ← Back
-          </button>
           <h2>View Request Form</h2>
           <span className="count-pill" style={{ marginLeft: "10px" }}>
             {record.axisrequestid}
@@ -282,7 +275,7 @@ export default function NFWorkflow() {
             className="btn-outline"
             onClick={() => navigate("/dashboard")}
           >
-            Cancel
+            {isSentBackToInitiator ? "Cancel" : "Close"}
           </button>
 
           {/* INITIATOR RESUBMIT ACTION (Status 3) */}
@@ -337,7 +330,7 @@ export default function NFWorkflow() {
           {/* Header Bar */}
           <div className="form-meta-row">
             <div className="meta-field-group">
-              <div className="meta-field">
+              <div className={`meta-field${isSentBackToInitiator ? " meta-field-editable" : ""}`}>
                 <label>Memo Type</label>
                 <input
                   type="text"

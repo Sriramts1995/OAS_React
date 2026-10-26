@@ -144,6 +144,7 @@
   text-transform: uppercase;
 }
 
+.meta-field input,
 .meta-field select {
   padding: 10px 12px;
   border: 1px solid var(--border-color);
@@ -153,27 +154,45 @@
   outline: none;
 }
 
+/*
+ * Memo Type disabled input override (Create Form only).
+ * Scoped via #nf-create-form (the <form> ID) so this rule NEVER leaks into
+ * the View form (NFWorkflow), which uses .form-meta-row .meta-field instead.
+ * Vite bundles both CSS files together, so without the ID scope the Create
+ * form's white background was overriding the View form's #F9F9F9 disabled bg.
+ * -webkit-text-fill-color + opacity:1 are needed to override the browser's
+ * default greyed-out styling for disabled inputs.
+ */
+#nf-create-form .meta-field input:disabled {
+  background-color: #ffffff !important;
+  color: var(--text-dark) !important;
+  -webkit-text-fill-color: var(--text-dark);
+  opacity: 1;
+  cursor: default;
+}
+
 .initiator-badge {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--axis-light-bg);
+  background: #f8fafc;
   padding: 10px 16px;
   border-radius: 8px;
-  border: 1px solid #f2d8e1;
+  border: 1px solid var(--border-color);
 }
 
 .initiator-avatar {
   width: 36px;
   height: 36px;
-  background: var(--axis-burgundy);
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--text-dark);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.85rem;
+  border: 1px solid var(--border-color);
 }
 
 .initiator-info {
@@ -215,7 +234,7 @@
 .section-title {
   margin: 0;
   font-size: 1rem;
-  color: var(--axis-burgundy);
+  color: var(--text-dark);
   font-weight: 700;
 }
 
@@ -243,7 +262,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: var(--axis-burgundy);
+  color: var(--text-dark);
   background: #ffffff;
   border-radius: 6px;
   border: 1px solid var(--border-color);

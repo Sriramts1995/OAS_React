@@ -144,6 +144,7 @@
   text-transform: uppercase;
 }
 
+.meta-field input,
 .meta-field select {
   padding: 10px 12px;
   border: 1px solid var(--border-color);
@@ -153,27 +154,54 @@
   outline: none;
 }
 
+/*
+ * Memo Type disabled input override (View Form - normal workflow state).
+ * Shows a light grey (#F9F9F9) background for disabled fields in
+ * approved / rejected / pending views. Uses .form-meta-row scope + !important
+ * to prevent Vite-bundled Create form CSS from overriding this.
+ * -webkit-text-fill-color + opacity:1 override browser default disabled styling.
+ */
+.form-meta-row .meta-field input:disabled {
+  background-color: #F9F9F9 !important;
+  color: var(--text-dark) !important;
+  -webkit-text-fill-color: var(--text-dark);
+  opacity: 1;
+  cursor: default;
+}
+
+/*
+ * Memo Type disabled input override (View Form - sent-back / resubmit state).
+ * When the initiator opens a sent-back request, the meta-field gets an additional
+ * "meta-field-editable" class (added conditionally in NFWorkflow.jsx via
+ * isSentBackToInitiator). This resets the background to white (#ffffff) to match
+ * the editable Subject / Details fields.
+ */
+.form-meta-row .meta-field-editable input:disabled {
+  background-color: #ffffff !important;
+}
+
 .initiator-badge {
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--axis-light-bg);
+  background: #f8fafc;
   padding: 10px 16px;
   border-radius: 8px;
-  border: 1px solid #f2d8e1;
+  border: 1px solid var(--border-color);
 }
 
 .initiator-avatar {
   width: 36px;
   height: 36px;
-  background: var(--axis-burgundy);
-  color: #ffffff;
+  background: #ffffff;
+  color: var(--text-dark);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 0.85rem;
+  border: 1px solid var(--border-color);
 }
 
 .initiator-info {
@@ -184,7 +212,7 @@
 .initiator-label {
   font-size: 0.7rem;
   text-transform: uppercase;
-  color: var(--axis-burgundy);
+  color: var(--text-dark);
   font-weight: 700;
 }
 
@@ -215,7 +243,7 @@
 .section-title {
   margin: 0;
   font-size: 1rem;
-  color: var(--axis-burgundy);
+  color: var(--text-dark);
   font-weight: 700;
 }
 
@@ -243,7 +271,7 @@
   align-items: center;
   justify-content: center;
   font-weight: 700;
-  color: var(--axis-burgundy);
+  color: var(--text-dark);
   background: #ffffff;
   border-radius: 6px;
   border: 1px solid var(--border-color);

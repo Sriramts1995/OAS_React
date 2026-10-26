@@ -145,13 +145,6 @@ export default function NFCreate() {
       {/* Top Header */}
       <header className="create-header">
         <div className="header-left">
-          <button
-            type="button"
-            className="btn-back"
-            onClick={() => navigate("/dashboard")}
-          >
-            ← Back
-          </button>
           <h2>New Request Form</h2>
         </div>
 
