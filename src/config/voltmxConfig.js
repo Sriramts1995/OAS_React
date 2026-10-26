@@ -3,11 +3,14 @@
 export const VOLTMX_CONFIG = {
   APP_KEY: "1872898528af290b41891736e44493f4",
   APP_SECRET: "e0c65166c9e4ce5ca26a14df6b13df0d",
+  //APP_KEY: "fcf988e48c69d6d315b9ba77acc9a50e",
+  //APP_SECRET: "6e72d69fa3115496d877bf8516a566e9",
   APP_VERSION: "1.0",
   PLATFORM_TYPE: "web",
   SDK_TYPE: "js",
   SDK_VERSION: "9.5.53",
   BASE_URL: "http://lp3-ap-52176291:8080/services",
+  //BASE_URL: "http://www.axisoasdev.com:8080/services",
 };
 
 export const COMMON_HEADERS = {

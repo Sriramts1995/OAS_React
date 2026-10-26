@@ -346,7 +346,7 @@ export const buildWorkflowPayload = ({
     toid: statusCode === REQUEST_STATUS.SEND_BACK ? record.initiatorid : null,
     toname: statusCode === REQUEST_STATUS.SEND_BACK ? record.initiatorname : null,
     tostatus: statusCode === REQUEST_STATUS.SEND_BACK ? 0 : null,
-    remarks: approverRemarks || (statusCode === REQUEST_STATUS.APPROVED ? "Approved" : statusCode === REQUEST_STATUS.SEND_BACK ? "sb" : "Rejected"),
+    remarks: approverRemarks || (statusCode === REQUEST_STATUS.APPROVED ? "Approved" : statusCode === REQUEST_STATUS.SEND_BACK ? "Sent Back" : "Rejected"),
     ip: "1.1.1.1",
     createdat: now,
     updatedat: now,

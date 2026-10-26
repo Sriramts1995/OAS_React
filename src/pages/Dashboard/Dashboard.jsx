@@ -11,6 +11,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { formatDate, getInitials } from "../../utils/utils";
 import ChatWidget from "../../components/ChatWidget/ChatWidget";
+import corporateLogo from "../../assets/Corporate_Logo.png";
 
 export default function Dashboard() {
   const [activeTab, setActiveTab] = useState("pending"); // Track 'pending' or 'initiated'
@@ -199,6 +200,13 @@ export default function Dashboard() {
     return Math.round(daysDifference);
   };
 
+  // Formats pending days singular/plural ("0 day", "1 day", "X days")
+  const formatPendingDays = (assignedDateStr) => {
+    const days = calculatePendingDays(assignedDateStr);
+    if (days === "N/A" || isNaN(days)) return "N/A";
+    return `${days} ${days === 0 || days === 1 ? "day" : "days"}`;
+  };
+
   // Status Badge Formatter for Dashboard Tabs
   const renderStatusBadge = (statusCode) => {
     const code = String(statusCode);
@@ -265,6 +273,7 @@ export default function Dashboard() {
       <header className="top-navbar">
         <div className="nav-brand">
           <span className="brand-icon">▲</span>
+          {/*<img src={corporateLogo} alt="Corporate Bank Logo" style={{ height: "50px", width: "100px" }} />*/}
           <span className="brand-name">Corporate Bank</span>
         </div>
 
@@ -479,7 +488,7 @@ export default function Dashboard() {
                             <td>
                               {String(item.status) === "1" ? (
                                 <span className="badge-pending">
-                                  {calculatePendingDays(item.assigneddate)} days
+                                  {formatPendingDays(item.assigneddate)}
                                 </span>
                               ) : (
                                 ""
@@ -493,7 +502,7 @@ export default function Dashboard() {
                             <td>{item.initiatordept}</td>
                             <td>
                               <span className="badge-pending">
-                                {calculatePendingDays(item.assigneddate)} days
+                                {formatPendingDays(item.assigneddate)}
                               </span>
                             </td>
                           </>

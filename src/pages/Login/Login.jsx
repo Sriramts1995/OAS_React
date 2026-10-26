@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { login } from "../../services/authservice";
 import { getDetailsByEmpNumber } from "../../services/userservice";
+import corporateLogo from "../../assets/Corporate_Logo.png";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -43,6 +44,7 @@ export default function Login() {
       <div className="brand-header">
         <div className="brand-logo">
           <span className="logo-symbol">▲</span>
+          {/*<img src={corporateLogo} alt="Corporate Bank Logo" style={{ height: "50px", width: "100px" }} />*/}
           <span className="logo-text">Corporate Bank</span>
         </div>
       </div>

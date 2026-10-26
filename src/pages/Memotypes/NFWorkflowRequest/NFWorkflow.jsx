@@ -67,9 +67,18 @@ export default function NFWorkflow() {
   const isSentBackToInitiator =
     String(record?.status) === "3" && record?.initiatorid === loggedInEmpId;
 
-  // Extract all dynamic approvers (Sequence 1, 2, 3...)
-  const displayApprovers =
-    record?.approvar?.filter((app) => app.sequence > 0) || [];
+  // Extract only active dynamic approvers (Sequence 1, 2, 3...)
+  // After send-back cycles the backend accumulates old + fresh entries with the same
+  // sequence number. Using a Map keyed by sequence, the last (fresh/active) entry
+  // overwrites older ones, so the UI always shows exactly the active approver line-up.
+  const displayApprovers = (() => {
+    const allPositive = record?.approvar?.filter((app) => app.sequence > 0) || [];
+    const seqMap = new Map();
+    allPositive.forEach((app) => {
+      seqMap.set(app.sequence, app); // later entry overwrites earlier for same sequence
+    });
+    return Array.from(seqMap.values()).sort((a, b) => a.sequence - b.sequence);
+  })();
 
   // Format existing history comments into "From: "id", "name" and Comments: """
   const existingApproverComments = (record?.history || [])
