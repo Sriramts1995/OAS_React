@@ -72,9 +72,11 @@ const buildDynamicEmailObject = ({
   // 5. SEND BACK
   else if (event === "sendback") {
     to = targetInitiatorEmail;
-    // Group emails of sendback approvers (or acting approver)
+    // Group emails of sendback approvers (or acting approver).
+    // The acting approver's row is retired to sequence -1 at send-back time, so match on
+    // status 3 for any non-initiator row (sequence !== 0) rather than sequence > 0.
     const sendbackEmails = approvarList
-      .filter((a) => a.sequence > 0 && a.status === REQUEST_STATUS.SEND_BACK && a.email)
+      .filter((a) => a.sequence !== 0 && a.status === REQUEST_STATUS.SEND_BACK && a.email)
       .map((a) => a.email);
     cc = sendbackEmails.length > 0 ? [...new Set(sendbackEmails)].join(",") : "";
     emailSubject = `OAS sent to initiator: ${subject}`;
@@ -254,15 +256,25 @@ export const buildWorkflowPayload = ({
           updatedat: now,
         };
 
-    // Extract original dynamic approvers (sequence > 0)
+    // Extract original dynamic approvers (sequence > 0).
+    // Rows already skipped in an earlier send-back cycle (sequence -1) are excluded.
     const originalLineup = approverList.filter((app) => app.sequence > 0);
 
-    // Processed approvers up to active index get sequence: -1, isskipped: 1
-    const skippedApprovers = originalLineup.slice(0, activeIndex + 1).map((app, idx) => ({
+    // Locate the acting approver inside the dynamic line-up itself.
+    // NOTE: activeIndex is an index into the full approverList (which includes the
+    // sequence-0 initiator row), so it must NOT be used against originalLineup.
+    const actingLineupIndex = originalLineup.findIndex(
+      (app) => app.approvarid === empNumber
+    );
+
+    // Volt MX behaviour (see approvar rows for a sent-back request): EVERY original
+    // approver row is retired with sequence: -1, isskipped: 1. The acting approver's
+    // retired row carries status 3 (Send Back); the others keep their prior status.
+    const skippedApprovers = originalLineup.map((app, idx) => ({
       ...app,
       sequence: -1,
       isskipped: 1,
-      status: idx === activeIndex ? REQUEST_STATUS.SEND_BACK : app.status,
+      status: idx === actingLineupIndex ? REQUEST_STATUS.SEND_BACK : app.status,
       updatedat: now,
     }));
 
