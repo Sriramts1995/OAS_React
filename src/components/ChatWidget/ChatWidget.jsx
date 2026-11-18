@@ -42,7 +42,7 @@ export default function ChatWidget() {
 
   const processIntent = async (userText) => {
     const textLower = userText.toLowerCase().trim();
-    const empNumber = localStorage.getItem("empNumber") || "100203";
+    const empNumber = localStorage.getItem("empNumber");
 
     setLoading(true);
 

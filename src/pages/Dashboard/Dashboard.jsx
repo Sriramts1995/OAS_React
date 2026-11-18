@@ -48,6 +48,11 @@ export default function Dashboard() {
 
   //getApprovedListByEmpId, getRejectedListByEmpId
   useEffect(() => {
+    // Session guard: no stored session means the user never logged in (or logged out)
+    if (!localStorage.getItem("empNumber") || !localStorage.getItem("claims_token")) {
+      navigate("/");
+      return;
+    }
     fetchPendingRequests();
   }, []);
 
@@ -149,7 +154,7 @@ export default function Dashboard() {
     setActiveTab("search");
 
     try {
-      const empNumber = localStorage.getItem("empNumber") || "100203";
+      const empNumber = localStorage.getItem("empNumber");
       const response = await advancedSearch({
         filterp: searchFilter,
         filterconditionp: searchKeyword,
@@ -287,9 +292,7 @@ export default function Dashboard() {
     try {
       setIsDownloading(true);
       const empNumber =
-        userInfo.EMPLOYEE_NUMBER ||
-        localStorage.getItem("empNumber") ||
-        "100203";
+        userInfo.EMPLOYEE_NUMBER || localStorage.getItem("empNumber");
 
       const response = await downloadExcelReport({
         fromDate: reportFromDate,

@@ -5,7 +5,7 @@ import { UI_LIMITS } from "../utils/constants";
 const SERVICES_URL = VOLTMX_CONFIG.BASE_URL;
 
 export const getPendingListByEmpId = async (
-  empnumber = "100203",
+  empnumber,
   rowSize = UI_LIMITS.DEFAULT_PAGE_SIZE
 ) => {
   const token = localStorage.getItem("claims_token");
@@ -30,7 +30,7 @@ export const getPendingListByEmpId = async (
 };
 
 export const getInitiatedListByEmpId = async (
-  empnumber = "100203",
+  empnumber,
   rowSize = UI_LIMITS.DEFAULT_PAGE_SIZE
 ) => {
   const token = localStorage.getItem("claims_token");
@@ -55,7 +55,7 @@ export const getInitiatedListByEmpId = async (
 };
 
 export const getApprovedListByEmpId = async (
-  empnumber = "100203",
+  empnumber,
   rowSize = UI_LIMITS.DEFAULT_PAGE_SIZE
 ) => {
   const token = localStorage.getItem("claims_token");
@@ -80,7 +80,7 @@ export const getApprovedListByEmpId = async (
 };
 
 export const getRejectedListByEmpId = async (
-  empnumber = "100203",
+  empnumber,
   rowSize = UI_LIMITS.DEFAULT_PAGE_SIZE
 ) => {
   const token = localStorage.getItem("claims_token");
@@ -110,7 +110,7 @@ export const advancedSearch = async ({
   filterconditionp = "",
   fromdate = "",
   todate = "",
-  loginuser = "100203",
+  loginuser,
 }) => {
   const token = localStorage.getItem("claims_token");
 

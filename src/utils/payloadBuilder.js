@@ -160,24 +160,23 @@ export const buildSubmitPayload = ({
     initiatorname: initiatorName,
     initiatordept: initiatorDept,
     ip: "1.1.1.1",
-    /*
+    // Initial history entry: same shape as the approver-action and resubmit entries.
+    // requestid is null because the request Id is assigned by the backend on insert.
     history: [
       {
         fromid: initiatorId,
         fromname: initiatorName,
+        fromstatus: 0,
         toid: null,
         toname: null,
-        fromstatus: 0,
         tostatus: null,
-        requestid: null,
-        remarks: remarks || "Initiated request",
+        remarks: remarks || "",
         ip: "1.1.1.1",
         createdat: currentDate,
         updatedat: currentDate,
+        requestid: null,
       },
     ],
-    */
-    history: [], // History kept empty on creation
     memotypeid: 1,
     submemotypeid: 1,
     memoname: MEMO_TYPES.NON_FINANCIAL,
