@@ -9,6 +9,7 @@ import {
   advancedSearch,
   downloadExcelReport,
 } from "../../services/requestservice";
+import { logout } from "../../services/authservice";
 import { useNavigate } from "react-router-dom";
 import { formatDate, getInitials } from "../../utils/utils";
 import ChatWidget from "../../components/ChatWidget/ChatWidget";
@@ -251,7 +252,11 @@ export default function Dashboard() {
     navigate("/create");
   };
 
-  const handleLogout = () => {
+  // Logout: invalidate the Foundry session first (sessionmgmt/invalidate), then clear
+  // local state and return to login. Same order as the Volt MX doLogout() flow; the
+  // local clean-up runs whether or not the server call succeeds.
+  const handleLogout = async () => {
+    await logout();
     localStorage.clear();
     navigate("/");
   };
@@ -346,7 +351,7 @@ export default function Dashboard() {
   const tabConfig = {
     pending: {
       title: "Pending Requests",
-      subtitle: "Here is an overview of your pending tasks and approvals.",
+      subtitle: "Here is an overview of your pending requests.",
       data: pendingRequests,
     },
     initiated: {
@@ -356,12 +361,12 @@ export default function Dashboard() {
     },
     approved: {
       title: "Approved Requests",
-      subtitle: "Here is an overview of your completed and approved requests.",
+      subtitle: "Here is an overview of your approved requests.",
       data: approvedRequests,
     },
     rejected: {
       title: "Rejected Requests",
-      subtitle: "Here is an overview of requests that were rejected.",
+      subtitle: "Here is an overview of requests that were rejected by you.",
       data: rejectedRequests,
     },
     search: {

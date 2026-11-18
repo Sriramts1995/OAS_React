@@ -153,8 +153,8 @@ export const submitrequest = async (payload) => {
   );
 };
 
-// SUBMIT / APPROVE REQUEST (Volt MX Object Service)
-export const approveorrejectRequest = async (payload) => {
+// UPDATE REQUEST: Approve / Reject / Send Back / Resubmit (Volt MX Object Service)
+export const updateRequest = async (payload) => {
   const token = localStorage.getItem("claims_token");
 
   return axios.put(

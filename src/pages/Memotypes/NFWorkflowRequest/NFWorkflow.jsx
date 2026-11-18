@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { approveorrejectRequest } from "../../../services/requestservice";
+import { updateRequest } from "../../../services/requestservice";
 import InputField from "../../../components/InputField";
 import TextAreaField from "../../../components/TextAreaField";
 import { buildWorkflowPayload, buildResubmitPayload } from "../../../utils/payloadBuilder";
@@ -107,7 +107,7 @@ export default function NFWorkflow() {
       });
 
       console.log("Sending Formatted Payload:", payload);
-      const response = await approveorrejectRequest(payload);
+      const response = await updateRequest(payload);
       console.log("Approve Response:", response.data);
 
       alert("Request Approved Successfully!");
@@ -141,7 +141,7 @@ export default function NFWorkflow() {
       });
 
       console.log("Sending Formatted Payload:", payload);
-      const response = await approveorrejectRequest(payload);
+      const response = await updateRequest(payload);
       console.log("Approve Response:", response.data);
 
       alert("Request Rejected Successfully!");
@@ -173,7 +173,7 @@ export default function NFWorkflow() {
       });
 
       console.log("Sending Send Back Payload:", payload);
-      const response = await approveorrejectRequest(payload);
+      const response = await updateRequest(payload);
       console.log("Send Back Response:", response.data);
 
       alert("Request Sent Back to Initiator Successfully!");
@@ -211,7 +211,7 @@ export default function NFWorkflow() {
       });
 
       console.log("Sending Resubmit Payload:", payload);
-      const response = await approveorrejectRequest(payload);
+      const response = await updateRequest(payload);
       console.log("Resubmit Response:", response.data);
 
       alert("Request Resubmitted Successfully!");
@@ -503,7 +503,7 @@ export default function NFWorkflow() {
               <TextAreaField
                 label="Approver Remarks / Action Comments"
                 rows={3}
-                placeholder="Enter remarks for approval or send back..."
+                placeholder="Enter approver remarks..."
                 value={approverRemarks}
                 onChange={(e) => setApproverRemarks(e.target.value)}
               />
