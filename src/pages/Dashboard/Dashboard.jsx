@@ -35,6 +35,17 @@ export default function Dashboard() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
+  // Date pickers are capped at today (same as validEndDate = today on the Volt MX
+  // calendar widgets). "max" greys out future dates in the picker. A future date
+  // typed in by hand is clamped to today, so the field never holds an invalid value
+  // and never jumps back to a half-typed intermediate date.
+  const todayStr = getTodayDateStr();
+  const handleDateChange = (setter) => (e) => {
+    const value = e.target.value;
+    // YYYY-MM-DD strings compare in date order
+    setter(value && value > todayStr ? todayStr : value);
+  };
+
   // Reports Module State
   const [reportFromDate, setReportFromDate] = useState(getTodayDateStr());
   const [reportToDate, setReportToDate] = useState(getTodayDateStr());
@@ -452,14 +463,16 @@ export default function Dashboard() {
                     type="date"
                     className="report-date-field"
                     value={reportFromDate}
-                    onChange={(e) => setReportFromDate(e.target.value)}
+                    max={todayStr}
+                    onChange={handleDateChange(setReportFromDate)}
                   />
                   <span className="date-separator">to</span>
                   <input
                     type="date"
                     className="report-date-field"
                     value={reportToDate}
-                    onChange={(e) => setReportToDate(e.target.value)}
+                    max={todayStr}
+                    onChange={handleDateChange(setReportToDate)}
                   />
                 </div>
               </div>
@@ -551,7 +564,8 @@ export default function Dashboard() {
                   <input
                     type="date"
                     value={fromDate}
-                    onChange={(e) => setFromDate(e.target.value)}
+                    max={todayStr}
+                    onChange={handleDateChange(setFromDate)}
                   />
                 </div>
 
@@ -560,7 +574,8 @@ export default function Dashboard() {
                   <input
                     type="date"
                     value={toDate}
-                    onChange={(e) => setToDate(e.target.value)}
+                    max={todayStr}
+                    onChange={handleDateChange(setToDate)}
                   />
                 </div>
 
