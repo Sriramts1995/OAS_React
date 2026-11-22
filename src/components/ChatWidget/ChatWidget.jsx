@@ -147,7 +147,7 @@ export default function ChatWidget() {
       else {
         addMessage(
           "bot",
-          "I didn't quite catch that. You can ask me about pending tasks, request metrics, or search by reference number.",
+          "I didn't quite catch that. You can ask me about pending tasks, request metrics, or click on create new request.",
           {
             chips: [
               "Show Pending Requests",
