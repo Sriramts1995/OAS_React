@@ -328,20 +328,20 @@ export default function Dashboard() {
       }
 
       // Exact decoding implementation matching Volt MX ReportsController.js
-      const base64String = resData.report.filecontent;
+      const base64String = resData.report.filecontent; //Extracts the encoded file string from the Volt MX Foundry JSON response.
       const base64Data = base64String.replace(/^data:.+;base64,/, ""); // Remove data URL scheme if present
-      const byteCharacters = atob(base64Data); // Decode Base64 string
-      const byteNumbers = new Array(byteCharacters.length);
+      const byteCharacters = atob(base64Data); // Decode Base64 string core decoder ASCII-to-Binary function
+      const byteNumbers = new Array(byteCharacters.length); // Empty array initialization for byte conversion
 
       for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
+        byteNumbers[i] = byteCharacters.charCodeAt(i); //Loops through every character in the binary string and converts it into its exact numeric byte value (from 0 to 255) using charCodeAt()
       }
 
-      const byteArray = new Uint8Array(byteNumbers);
+      const byteArray = new Uint8Array(byteNumbers); //Converts the standard JavaScript array into a strongly-typed 8-bit unsigned integer array
       const blob = new Blob([byteArray], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
-      const url = window.URL.createObjectURL(blob);
+      const url = window.URL.createObjectURL(blob); //Generates a temporary, internal browser URL
 
       // Create a link element to download the file matching response.report.filename
       const link = document.createElement("a");
